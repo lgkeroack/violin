@@ -1,0 +1,291 @@
+#mixer-section {
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  padding: 16px;
+}
+
+/* --- Panel: two columns with routing divider --- */
+
+.mixer-panel {
+  display: flex;
+  gap: 0;
+  align-items: stretch;
+}
+
+.mixer-section {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* --- Section headers --- */
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 0 8px 0;
+}
+
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+.section-title--input {
+  color: var(--accent);
+}
+
+.section-title--output {
+  color: var(--green);
+}
+
+.add-strip-btn {
+  padding: 3px 10px;
+  border: 1px dashed var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-left: auto;
+}
+
+.add-strip-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(74, 158, 255, 0.05);
+}
+
+/* --- Strip group: vertical stack within each column --- */
+
+.strip-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+/* --- Strip: horizontal row spanning column width --- */
+
+.mixer-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-surface);
+  border-radius: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+}
+
+.mixer-strip[data-kind="input"] {
+  border-left: 3px solid var(--accent);
+}
+
+.mixer-strip[data-kind="output"] {
+  border-left: 3px solid var(--green);
+}
+
+/* Label */
+.strip-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  min-width: 28px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.mixer-strip[data-kind="input"] .strip-label {
+  color: var(--accent);
+}
+
+.mixer-strip[data-kind="output"] .strip-label {
+  color: var(--green);
+}
+
+/* Device selector */
+.strip-device {
+  min-width: 100px;
+  max-width: 180px;
+  flex-shrink: 0;
+}
+
+.strip-device select {
+  width: 100%;
+  padding: 5px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 11px;
+  cursor: pointer;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.strip-device select:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+/* Meter canvas */
+.meter-canvas {
+  width: 12px;
+  height: 40px;
+  border-radius: 2px;
+  background: var(--bg-primary);
+  flex-shrink: 0;
+}
+
+/* Gain slider (horizontal) */
+.gain-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  min-width: 60px;
+  height: 6px;
+  background: var(--bg-primary);
+  border-radius: 3px;
+  cursor: pointer;
+  outline: none;
+}
+
+.gain-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--accent);
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+}
+
+.gain-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: var(--accent);
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+}
+
+.gain-slider::-webkit-slider-runnable-track {
+  height: 6px;
+  background: var(--bg-primary);
+  border-radius: 3px;
+}
+
+.gain-slider::-moz-range-track {
+  height: 6px;
+  background: var(--bg-primary);
+  border-radius: 3px;
+}
+
+/* Gain value */
+.gain-value {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  min-width: 36px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Mute button */
+.mute-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mute-btn:hover {
+  border-color: var(--red);
+  color: var(--text-primary);
+}
+
+.mute-btn.muted {
+  background: var(--red);
+  color: #fff;
+  border-color: var(--red);
+}
+
+/* Remove button */
+.remove-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.remove-btn:hover {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+/* --- Routing divider (vertical between columns) --- */
+
+.routing-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  min-width: 50px;
+}
+
+.routing-line {
+  flex: 1;
+  width: 1px;
+  background: var(--border);
+}
+
+.routing-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.routing-arrow {
+  font-size: 14px;
+  color: var(--accent);
+}
+
+.routing-latency {
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--green);
+  white-space: nowrap;
+}

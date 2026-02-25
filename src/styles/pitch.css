@@ -1,0 +1,272 @@
+#pitch-section {
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  padding: 24px;
+}
+
+.pitch-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.pitch-note {
+  font-size: 72px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+}
+
+.pitch-note .octave {
+  font-size: 36px;
+  opacity: 0.6;
+  vertical-align: super;
+  margin-left: 2px;
+}
+
+.pitch-note.inactive {
+  color: var(--text-secondary);
+  opacity: 0.3;
+}
+
+.pitch-frequency {
+  font-size: 16px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.cents-gauge {
+  width: 100%;
+  max-width: 400px;
+  position: relative;
+}
+
+.cents-bar-bg {
+  width: 100%;
+  height: 12px;
+  background: var(--bg-primary);
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.cents-center-line {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--text-secondary);
+  transform: translateX(-50%);
+  opacity: 0.5;
+}
+
+.cents-indicator {
+  position: absolute;
+  top: 0;
+  width: 6px;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--green);
+  transform: translateX(-50%);
+  left: 50%;
+  transition: left 0.06s linear, background 0.15s;
+}
+
+.cents-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.cents-value {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  margin-top: 4px;
+}
+
+/* Tuning panel */
+#tuning-section {
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  padding: 20px;
+}
+
+.tuning-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tuning-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tuning-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+}
+
+.tuning-select {
+  flex: 1;
+  max-width: 280px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.tuning-select optgroup {
+  color: var(--text-secondary);
+  font-style: normal;
+}
+
+.tuning-strings {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.tuning-string {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 16px;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  min-width: 70px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.tuning-string.active {
+  border-color: var(--text-secondary);
+}
+
+.tuning-string.in-tune {
+  border-color: var(--green);
+  background: rgba(0, 230, 118, 0.08);
+}
+
+.tuning-string.close {
+  border-color: var(--yellow);
+  background: rgba(255, 234, 0, 0.06);
+}
+
+.tuning-string.off {
+  border-color: var(--red);
+  background: rgba(255, 23, 68, 0.06);
+}
+
+.tuning-string-note {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.tuning-string-octave {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.tuning-string-freq {
+  font-size: 10px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.tuning-string-indicator {
+  font-size: 16px;
+  min-height: 20px;
+  line-height: 20px;
+}
+
+.tuning-string.in-tune .tuning-string-indicator { color: var(--green); }
+.tuning-string.close .tuning-string-indicator { color: var(--yellow); }
+.tuning-string.off .tuning-string-indicator { color: var(--red); }
+
+/* Fingerboard */
+#fingerboard-section {
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  padding: 20px;
+}
+
+.fingerboard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-x: auto;
+}
+
+.fb-string-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.fb-string-row.bowed {
+  background: rgba(74, 158, 255, 0.08);
+  border-color: var(--accent);
+}
+
+.fb-string-label {
+  width: 28px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.fb-string-row.bowed .fb-string-label {
+  color: var(--accent);
+}
+
+.fb-position {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  border: 2px solid var(--border);
+  flex-shrink: 0;
+  transition: background 0.12s, border-color 0.12s, box-shadow 0.12s;
+  cursor: default;
+}
+
+.fb-position.open {
+  border-style: double;
+  border-width: 3px;
+}
+
+.fb-position.active {
+  background: var(--green);
+  border-color: var(--green);
+  box-shadow: 0 0 10px rgba(0, 230, 118, 0.6), 0 0 20px rgba(0, 230, 118, 0.3);
+}
