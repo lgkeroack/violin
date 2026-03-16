@@ -13,19 +13,23 @@ export class PitchDisplay {
     const display = document.createElement('div');
     display.className = 'pitch-display';
 
-    // Note name
+    // Left column: note + frequency
+    const left = document.createElement('div');
+    left.className = 'pitch-left';
+
     this.noteEl = document.createElement('div');
     this.noteEl.className = 'pitch-note inactive';
     this.noteEl.innerHTML = '&mdash;';
-    display.appendChild(this.noteEl);
+    left.appendChild(this.noteEl);
 
-    // Frequency
     this.freqEl = document.createElement('div');
     this.freqEl.className = 'pitch-frequency';
     this.freqEl.textContent = '--- Hz';
-    display.appendChild(this.freqEl);
+    left.appendChild(this.freqEl);
 
-    // Cents gauge
+    display.appendChild(left);
+
+    // Cents gauge (fills remaining width)
     const gauge = document.createElement('div');
     gauge.className = 'cents-gauge';
 

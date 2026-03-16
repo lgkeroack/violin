@@ -1,0 +1,233 @@
+/* --- Metronome --- */
+
+#metronome-section {
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  padding: 16px 20px;
+}
+
+.metronome-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.metronome-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.metronome-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+}
+
+/* Play/stop button */
+.metronome-play-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  margin-left: auto;
+}
+
+.metronome-play-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.metronome-play-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #f5f0e8;
+}
+
+/* Controls row */
+.metronome-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* BPM group */
+.metronome-bpm-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.metronome-bpm-btn {
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.metronome-bpm-btn:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.metronome-bpm-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  min-width: 60px;
+  height: 6px;
+  background: var(--bg-primary);
+  border-radius: 3px;
+  cursor: pointer;
+  outline: none;
+}
+
+.metronome-bpm-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--accent);
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+}
+
+.metronome-bpm-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: var(--accent);
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+}
+
+.metronome-bpm-display {
+  width: 46px;
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.metronome-bpm-display:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.metronome-bpm-unit {
+  font-size: 10px;
+  color: var(--text-secondary);
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+/* Time signature */
+.metronome-timesig-wrap {
+  width: 70px;
+  flex-shrink: 0;
+}
+
+/* Volume */
+.metronome-vol-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.metronome-vol-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.metronome-vol-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  min-width: 50px;
+  height: 6px;
+  background: var(--bg-primary);
+  border-radius: 3px;
+  cursor: pointer;
+  outline: none;
+}
+
+.metronome-vol-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  background: var(--accent);
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+}
+
+.metronome-vol-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  background: var(--accent);
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+}
+
+/* Beat indicators */
+.metronome-beats {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.metronome-beat-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  border: 2px solid var(--border);
+  transition: background 0.08s, border-color 0.08s, box-shadow 0.08s;
+}
+
+.metronome-beat-dot.accent {
+  border-width: 2px;
+  border-style: double;
+}
+
+.metronome-beat-dot.lit {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 8px rgba(30, 58, 110, 0.6);
+}
+
+.metronome-beat-dot.accent.lit {
+  background: var(--yellow);
+  border-color: var(--yellow);
+  box-shadow: 0 0 8px rgba(196, 154, 42, 0.6);
+}

@@ -61,7 +61,7 @@
 .add-strip-btn:hover {
   border-color: var(--accent);
   color: var(--accent);
-  background: rgba(74, 158, 255, 0.05);
+  background: rgba(30, 58, 110, 0.05);
 }
 
 /* --- Strip group: vertical stack within each column --- */
@@ -114,28 +114,10 @@
 
 /* Device selector */
 .strip-device {
-  min-width: 100px;
-  max-width: 180px;
-  flex-shrink: 0;
-}
-
-.strip-device select {
-  width: 100%;
-  padding: 5px 6px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-size: 11px;
-  cursor: pointer;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.strip-device select:focus {
-  border-color: var(--accent);
-  outline: none;
+  min-width: 120px;
+  max-width: 320px;
+  flex: 1;
+  flex-shrink: 1;
 }
 
 /* Meter canvas */
@@ -168,6 +150,7 @@
   border-radius: 50%;
   border: none;
   cursor: pointer;
+  margin-top: -4px;
 }
 
 .gain-slider::-moz-range-thumb {
@@ -226,7 +209,7 @@
 
 .mute-btn.muted {
   background: var(--red);
-  color: #fff;
+  color: #f5f0e8;
   border-color: var(--red);
 }
 
@@ -287,5 +270,69 @@
   font-size: 10px;
   font-variant-numeric: tabular-nums;
   color: var(--green);
+  white-space: nowrap;
+  cursor: help;
+}
+
+/* Latency tooltip */
+.latency-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.latency-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  white-space: pre;
+  line-height: 1.6;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 100;
+}
+
+.latency-wrap:hover .latency-tooltip {
+  opacity: 1;
+}
+
+/* --- Buffer size control --- */
+
+.buffer-size-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 10px 0;
+}
+
+.buffer-size-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.buffer-size-dropdown-wrap {
+  width: 170px;
+  flex-shrink: 0;
+}
+
+.buffer-size-estimate {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }

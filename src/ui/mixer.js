@@ -1,4 +1,5 @@
 import { DeviceSelector } from './device-selector.js';
+import { CustomDropdown } from './custom-dropdown.js';
 
 export class MixerPanel {
   constructor(container) {
@@ -15,6 +16,7 @@ export class MixerPanel {
     this.onOutputGainChange = null;   // (channelId, value) => void
     this.onInputMuteToggle = null;    // (channelId) => void
     this.onOutputMuteToggle = null;   // (channelId) => void
+    this.onBufferSizeChange = null;   // (samples|null) => void
 
     /** @type {Map<number, StripState>} */
     this.inputStrips = new Map();
@@ -72,9 +74,18 @@ export class MixerPanel {
     arrow.textContent = '\u2192';
     routingInfo.appendChild(arrow);
 
+    this._latencyWrap = document.createElement('div');
+    this._latencyWrap.className = 'latency-wrap';
+
     this.latencyEl = document.createElement('span');
     this.latencyEl.className = 'routing-latency';
-    routingInfo.appendChild(this.latencyEl);
+    this._latencyWrap.appendChild(this.latencyEl);
+
+    this._latencyTooltip = document.createElement('div');
+    this._latencyTooltip.className = 'latency-tooltip';
+    this._latencyWrap.appendChild(this._latencyTooltip);
+
+    routingInfo.appendChild(this._latencyWrap);
 
     const arrow2 = document.createElement('span');
     arrow2.className = 'routing-arrow';
@@ -116,6 +127,54 @@ export class MixerPanel {
     panel.appendChild(outputSection);
 
     this.container.appendChild(panel);
+
+    // --- Buffer size control ---
+    this.container.appendChild(this._buildBufferSizeRow());
+
+  }
+
+  _buildBufferSizeRow() {
+    const row = document.createElement('div');
+    row.className = 'buffer-size-row';
+
+    const label = document.createElement('span');
+    label.className = 'buffer-size-label';
+    label.textContent = 'Buffer Size';
+    row.appendChild(label);
+
+    const dropdownWrap = document.createElement('div');
+    dropdownWrap.className = 'buffer-size-dropdown-wrap';
+    this._bufferDropdown = new CustomDropdown(dropdownWrap, { placeholder: 'Auto' });
+    this._bufferDropdown.setItems([
+      { value: '', label: 'Auto (default)' },
+      { value: '64', label: '64 samples' },
+      { value: '128', label: '128 samples' },
+      { value: '256', label: '256 samples' },
+      { value: '512', label: '512 samples' },
+      { value: '1024', label: '1024 samples' },
+    ]);
+    this._bufferDropdown.value = '';
+    this._bufferDropdown.onChange = (val) => {
+      const samples = val ? parseInt(val, 10) : null;
+      this._updateBufferEstimate(samples);
+      this.onBufferSizeChange?.(samples);
+    };
+    row.appendChild(dropdownWrap);
+
+    this._bufferEstimate = document.createElement('span');
+    this._bufferEstimate.className = 'buffer-size-estimate';
+    row.appendChild(this._bufferEstimate);
+
+    return row;
+  }
+
+  _updateBufferEstimate(samples) {
+    if (!samples) {
+      this._bufferEstimate.textContent = '';
+      return;
+    }
+    const ms = (samples / 48000) * 1000;
+    this._bufferEstimate.textContent = `~${ms.toFixed(1)} ms at 48kHz`;
   }
 
   // --- Dynamic strip management ---
@@ -139,7 +198,7 @@ export class MixerPanel {
       this.onRemoveInput?.(channelId));
 
     strip.deviceSelector.update(this.devices);
-    if (deviceId) strip.deviceSelector.select.value = deviceId;
+    if (deviceId) strip.deviceSelector.value = deviceId;
 
     this.inputStripContainer.appendChild(strip.el);
     this.inputStrips.set(channelId, strip);
@@ -174,7 +233,7 @@ export class MixerPanel {
       this.onRemoveOutput?.(channelId));
 
     strip.deviceSelector.update(this.devices);
-    if (deviceId) strip.deviceSelector.select.value = deviceId;
+    if (deviceId) strip.deviceSelector.value = deviceId;
 
     this.outputStripContainer.appendChild(strip.el);
     this.outputStrips.set(channelId, strip);
@@ -276,11 +335,24 @@ export class MixerPanel {
     }
   }
 
-  updateLatency(ms, bridgeMs) {
+  updateLatency(ms, bridgeMs, breakdown) {
     let text = `${ms.toFixed(1)} ms`;
-    if (bridgeMs !== undefined && this.outputStrips.size > 1) {
+    const hasBridge = bridgeMs !== undefined && this.outputStrips.size > 1;
+    if (hasBridge) {
       text += ` (+${bridgeMs.toFixed(1)} ms bridge)`;
     }
     this.latencyEl.textContent = text;
+
+    // Update tooltip breakdown
+    if (breakdown) {
+      let tip = `Base latency: ${breakdown.baseMs.toFixed(1)} ms\n`;
+      tip += `Output latency: ${breakdown.outputMs.toFixed(1)} ms\n`;
+      if (hasBridge) {
+        tip += `Bridge latency: ${bridgeMs.toFixed(1)} ms\n`;
+      }
+      const total = breakdown.baseMs + breakdown.outputMs + (hasBridge ? bridgeMs : 0);
+      tip += `Total: ${total.toFixed(1)} ms`;
+      this._latencyTooltip.textContent = tip;
+    }
   }
 }

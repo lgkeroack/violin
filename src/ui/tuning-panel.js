@@ -1,4 +1,5 @@
 import { TUNING_PRESETS, DEFAULT_TUNING } from '../audio/tunings.js';
+import { CustomDropdown } from './custom-dropdown.js';
 
 export class TuningPanel {
   constructor(container) {
@@ -24,8 +25,12 @@ export class TuningPanel {
     label.textContent = 'Tuning';
     header.appendChild(label);
 
-    this.presetSelect = document.createElement('select');
-    this.presetSelect.className = 'tuning-select';
+    const dropdownWrap = document.createElement('div');
+    dropdownWrap.className = 'tuning-select-wrap';
+
+    this.presetDropdown = new CustomDropdown(dropdownWrap, {
+      placeholder: 'Select tuning...',
+    });
 
     // Group by family
     const families = {};
@@ -33,25 +38,28 @@ export class TuningPanel {
       if (!families[preset.family]) families[preset.family] = [];
       families[preset.family].push({ key, preset });
     }
+
+    const groups = [];
     for (const [family, items] of Object.entries(families)) {
-      const group = document.createElement('optgroup');
-      group.label = family;
-      for (const { key, preset } of items) {
-        const opt = document.createElement('option');
-        opt.value = key;
-        opt.textContent = preset.label;
-        if (key === DEFAULT_TUNING) opt.selected = true;
-        group.appendChild(opt);
-      }
-      this.presetSelect.appendChild(group);
+      groups.push({
+        label: family,
+        items: items.map(({ key, preset }) => ({
+          value: key,
+          label: preset.label,
+        })),
+      });
     }
 
-    this.presetSelect.addEventListener('change', () => {
-      this.currentTuning = this.presetSelect.value;
+    this.presetDropdown.setGroupedItems(groups);
+    this.presetDropdown.value = DEFAULT_TUNING;
+
+    this.presetDropdown.onChange = (val) => {
+      this.currentTuning = val;
       this._renderStrings();
       if (this.onTuningChange) this.onTuningChange(this.currentTuning);
-    });
-    header.appendChild(this.presetSelect);
+    };
+
+    header.appendChild(dropdownWrap);
     panel.appendChild(header);
 
     // String indicators container
@@ -127,13 +135,13 @@ export class TuningPanel {
     const absCents = Math.abs(closestCents);
     if (absCents < 5) {
       closest.el.classList.add('in-tune');
-      closest.indicator.textContent = '✓';
+      closest.indicator.textContent = '\u2713';
     } else if (absCents < 15) {
       closest.el.classList.add('close');
-      closest.indicator.textContent = closestCents > 0 ? '↑' : '↓';
+      closest.indicator.textContent = closestCents > 0 ? '\u2191' : '\u2193';
     } else {
       closest.el.classList.add('off');
-      closest.indicator.textContent = closestCents > 0 ? '↑↑' : '↓↓';
+      closest.indicator.textContent = closestCents > 0 ? '\u2191\u2191' : '\u2193\u2193';
     }
   }
 }

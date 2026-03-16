@@ -1,0 +1,274 @@
+#trainer-section {
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  padding: 16px 20px;
+}
+
+.trainer-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.trainer-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.trainer-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+/* Config row */
+.trainer-config {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.trainer-config-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.trainer-config-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.trainer-config-wrap {
+  flex: 1;
+  min-width: 90px;
+}
+
+.trainer-config-wrap--small {
+  min-width: 70px;
+}
+
+/* Buttons */
+.trainer-btn-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.trainer-start-btn {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 6px;
+  background: var(--accent);
+  color: #f5f0e8;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.trainer-start-btn:hover {
+  background: #3a8af0;
+}
+
+.trainer-start-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.trainer-stop-btn {
+  padding: 8px 16px;
+  border: 1px solid var(--red);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--red);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.trainer-stop-btn:hover {
+  background: rgba(255, 23, 68, 0.1);
+}
+
+/* Progress bar */
+.trainer-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.trainer-progress-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-primary);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.trainer-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+  width: 0%;
+}
+
+.trainer-progress-text {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  min-width: 50px;
+  text-align: right;
+}
+
+/* Target note display */
+.trainer-target-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  border: 2px solid var(--yellow);
+  animation: pulse-border 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-border {
+  0%, 100% { border-color: rgba(196, 154, 42, 0.4); }
+  50% { border-color: rgba(196, 154, 42, 0.9); }
+}
+
+.trainer-target-note {
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.trainer-target-note .octave {
+  font-size: 24px;
+  opacity: 0.6;
+  vertical-align: super;
+  margin-left: 2px;
+}
+
+.trainer-target-instruction {
+  font-size: 12px;
+  color: var(--yellow);
+  font-weight: 600;
+}
+
+/* Stats row */
+.trainer-stats {
+  display: flex;
+  gap: 12px;
+}
+
+.trainer-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  background: var(--bg-primary);
+  border-radius: 6px;
+}
+
+@media (max-width: 500px) {
+  .trainer-stats {
+    flex-wrap: wrap;
+  }
+  .trainer-stat {
+    flex: 0 0 calc(50% - 6px);
+  }
+}
+
+.trainer-stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.trainer-stat-label {
+  font-size: 10px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.trainer-stat-value.hits { color: var(--green); }
+.trainer-stat-value.misses { color: var(--red); }
+
+/* Completion summary */
+.trainer-summary {
+  padding: 16px;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  border: 1px solid var(--green);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.trainer-summary-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--green);
+}
+
+.trainer-summary-stats {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.trainer-summary-stat {
+  flex: 1;
+  text-align: center;
+  padding: 8px 4px;
+}
+
+@media (max-width: 500px) {
+  .trainer-summary-stats {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .trainer-summary-stat {
+    flex: 0 0 calc(33% - 8px);
+  }
+}
+
+.trainer-summary-stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.trainer-summary-stat-label {
+  font-size: 10px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+/* Hidden utility */
+.trainer-hidden {
+  display: none !important;
+}

@@ -301,10 +301,207 @@ export class AudioEngine {
     return (base + output) * 1000; // ms
   }
 
+  getLatencyBreakdown() {
+    const baseMs = (this.ctx.baseLatency || 0) * 1000;
+    const outputMs = (this.ctx.outputLatency || 0) * 1000;
+    return { baseMs, outputMs };
+  }
+
   /** Estimated bridge latency for secondary outputs */
   getBridgeLatency() {
     // ~128 samples at 48kHz = ~2.67ms per bridge hop
     return 128 / (this.ctx?.sampleRate || 48000) * 1000;
+  }
+
+  /**
+   * Recreate the AudioContext with a specific buffer size hint.
+   * @param {number|null} bufferSizeSamples - Buffer size in samples, or null for 'interactive' default
+   * @returns {Promise<AudioContext>} The new AudioContext
+   */
+  async reinitWithBufferSize(bufferSizeSamples) {
+    if (this._reinitInProgress) return this.ctx;
+    this._reinitInProgress = true;
+    try {
+      return await this._doReinit(bufferSizeSamples);
+    } finally {
+      this._reinitInProgress = false;
+    }
+  }
+
+  async _doReinit(bufferSizeSamples) {
+    const latencyHint = bufferSizeSamples != null
+      ? bufferSizeSamples / (this.ctx?.sampleRate || 48000)
+      : 'interactive';
+
+    // Save input streams
+    const savedInputs = [];
+    for (const [id, ch] of this.inputs) {
+      savedInputs.push({
+        id,
+        stream: ch.stream,
+        gainValue: ch.gainValue,
+        muted: ch.muted,
+      });
+      // Disconnect without stopping stream tracks
+      if (ch.source) ch.source.disconnect();
+      ch.gain.disconnect();
+      ch.analyser.disconnect();
+    }
+
+    // Save output device IDs
+    const savedOutputs = [];
+    for (const [id, ch] of this.outputs) {
+      savedOutputs.push({
+        id,
+        deviceId: ch.deviceId,
+        primary: ch.primary,
+        gainValue: ch.gainValue,
+        muted: ch.muted,
+      });
+      if (!ch.primary && ch.ctx) {
+        ch.bridgeSource?.disconnect();
+        ch.outputGain?.disconnect();
+        ch.ctx.close();
+      } else if (ch.primary) {
+        ch.outputGain?.disconnect();
+        this.mixBus?.disconnect(ch.outputGain);
+      }
+    }
+    this.outputs.clear();
+
+    // Close old context
+    if (this.mixBus) {
+      this.mixBus.disconnect();
+    }
+    if (this.ctx) {
+      await this.ctx.close();
+    }
+
+    // Create new context
+    this.ctx = new AudioContext({ latencyHint });
+
+    // Recreate mix bus and analysis nodes
+    this.mixBus = this.ctx.createGain();
+    this.pitchAnalyser = this.ctx.createAnalyser();
+    this.pitchAnalyser.fftSize = 4096;
+    this.pitchAnalyser.smoothingTimeConstant = 0;
+    this.mixBus.connect(this.pitchAnalyser);
+    this.bridgeNode = this.ctx.createMediaStreamDestination();
+    this.mixBus.connect(this.bridgeNode);
+
+    // Reconnect inputs
+    for (const saved of savedInputs) {
+      const ch = this.inputs.get(saved.id);
+      if (!ch) continue;
+
+      // Recreate gain and analyser nodes in new context
+      const gain = this.ctx.createGain();
+      const analyser = this.ctx.createAnalyser();
+      analyser.fftSize = 2048;
+      analyser.smoothingTimeConstant = 0.8;
+      gain.connect(analyser);
+      gain.connect(this.mixBus);
+
+      ch.gain = gain;
+      ch.analyser = analyser;
+      ch.gainValue = saved.gainValue;
+      ch.muted = saved.muted;
+
+      if (!saved.muted) {
+        gain.gain.value = saved.gainValue;
+      } else {
+        gain.gain.value = 0;
+      }
+
+      // Reconnect stream if we have one
+      ch.stream = saved.stream;
+      if (saved.stream && saved.stream.active) {
+        try {
+          const source = this.ctx.createMediaStreamSource(saved.stream);
+          source.connect(gain);
+          ch.source = source;
+        } catch (err) {
+          console.warn('Failed to reconnect stream after reinit:', err);
+          ch.source = null;
+        }
+      } else {
+        ch.source = null;
+      }
+    }
+
+    // Reconnect outputs
+    for (const saved of savedOutputs) {
+      if (saved.primary) {
+        // Primary output
+        const outGain = this.ctx.createGain();
+        const analyser = this.ctx.createAnalyser();
+        analyser.fftSize = 2048;
+        analyser.smoothingTimeConstant = 0.8;
+
+        this.mixBus.connect(outGain);
+        outGain.connect(this.ctx.destination);
+        outGain.connect(analyser);
+
+        if (!saved.muted) {
+          outGain.gain.value = saved.gainValue;
+        } else {
+          outGain.gain.value = 0;
+        }
+
+        if (this.ctx.setSinkId && saved.deviceId) {
+          try { await this.ctx.setSinkId(saved.deviceId); } catch (_) {}
+        }
+
+        this.outputs.set(saved.id, {
+          id: saved.id,
+          deviceId: saved.deviceId,
+          primary: true,
+          ctx: this.ctx,
+          gain: null,
+          analyser,
+          outputGain: outGain,
+          muted: saved.muted,
+          gainValue: saved.gainValue,
+        });
+      } else {
+        // Secondary output
+        const outCtx = new AudioContext({ latencyHint: 'interactive' });
+        if (outCtx.setSinkId && saved.deviceId) {
+          try { await outCtx.setSinkId(saved.deviceId); } catch (_) {}
+        }
+
+        const bridgeSource = outCtx.createMediaStreamSource(this.bridgeNode.stream);
+        const outGain = outCtx.createGain();
+        const analyser = outCtx.createAnalyser();
+        analyser.fftSize = 2048;
+        analyser.smoothingTimeConstant = 0.8;
+
+        bridgeSource.connect(outGain);
+        outGain.connect(analyser);
+        outGain.connect(outCtx.destination);
+
+        if (!saved.muted) {
+          outGain.gain.value = saved.gainValue;
+        } else {
+          outGain.gain.value = 0;
+        }
+
+        this.outputs.set(saved.id, {
+          id: saved.id,
+          deviceId: saved.deviceId,
+          primary: false,
+          ctx: outCtx,
+          bridgeSource,
+          gain: outGain,
+          analyser,
+          outputGain: outGain,
+          muted: saved.muted,
+          gainValue: saved.gainValue,
+        });
+      }
+    }
+
+    return this.ctx;
   }
 
   destroy() {

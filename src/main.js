@@ -1,11 +1,16 @@
 import { AudioEngine } from './audio/audio-engine.js';
 import { DeviceManager } from './audio/device-manager.js';
 import { PitchDetector } from './audio/pitch-detector.js';
+import { MetronomeEngine } from './audio/metronome-engine.js';
 import { MixerPanel } from './ui/mixer.js';
 import { LevelMeter } from './ui/meters.js';
 import { PitchDisplay } from './ui/pitch-display.js';
 import { TuningPanel } from './ui/tuning-panel.js';
 import { Fingerboard } from './ui/fingerboard.js';
+import { ScalePanel } from './ui/scale-panel.js';
+import { ScaleTrainer } from './ui/scale-trainer.js';
+import { generateScaleSequence } from './audio/scale-sequence.js';
+import { MetronomePanel } from './ui/metronome-panel.js';
 
 const engine = new AudioEngine();
 const deviceManager = new DeviceManager();
@@ -13,16 +18,90 @@ const pitchDetector = new PitchDetector();
 
 const pitchSection = document.getElementById('pitch-section');
 const tuningSection = document.getElementById('tuning-section');
+const scaleSection = document.getElementById('scale-section');
+const trainerSection = document.getElementById('trainer-section');
+const metronomeSection = document.getElementById('metronome-section');
 const fingerboardSection = document.getElementById('fingerboard-section');
 const mixerSection = document.getElementById('mixer-section');
 
 // Build UI
 const pitchDisplay = new PitchDisplay(pitchSection);
 const tuningPanel = new TuningPanel(tuningSection);
+const scalePanel = new ScalePanel(scaleSection);
+const scaleTrainer = new ScaleTrainer(trainerSection);
+const metronomePanel = new MetronomePanel(metronomeSection);
 const fingerboard = new Fingerboard(fingerboardSection);
 const mixer = new MixerPanel(mixerSection);
 
 tuningPanel.onTuningChange = (tuningKey) => fingerboard.setTuning(tuningKey);
+
+scalePanel.onScaleChange = (scaleData) => fingerboard.setScale(scaleData);
+
+// --- Scale Trainer wiring ---
+
+scaleTrainer.onStart = () => {
+  const scaleKey = scalePanel.scaleKey;
+  const rootPitchClass = scalePanel.rootPitchClass;
+  const tuningKey = tuningPanel.currentTuning;
+
+  if (!scaleKey) return; // no scale selected
+
+  const sequence = generateScaleSequence(tuningKey, rootPitchClass, scaleKey, {
+    octaves: scaleTrainer.octaves,
+    direction: scaleTrainer.direction,
+  });
+
+  if (sequence.length === 0) return;
+
+  fingerboard.clearTrainerState();
+  scaleTrainer.beginSession(sequence);
+};
+
+scaleTrainer.onTargetChange = (target) => {
+  fingerboard.setTrainerTarget(target.stringIndex, target.positionIndex);
+};
+
+scaleTrainer.onHit = (target) => {
+  fingerboard.markTrainerHit(target.stringIndex, target.positionIndex);
+};
+
+scaleTrainer.onStop = () => {
+  fingerboard.clearTrainerState();
+};
+
+// --- Metronome wiring (lazy engine creation) ---
+
+let metronomeEngine = null;
+
+metronomePanel.onStart = () => {
+  if (!metronomeEngine && engine.ctx) {
+    metronomeEngine = new MetronomeEngine(engine.ctx);
+    metronomeEngine.onBeat = (beatIndex) => {
+      metronomePanel.flashBeat(beatIndex);
+    };
+  }
+  if (metronomeEngine) {
+    metronomeEngine.bpm = metronomePanel.bpm;
+    metronomeEngine.beatsPerMeasure = metronomePanel.beats;
+    metronomeEngine.start();
+  }
+};
+
+metronomePanel.onStop = () => {
+  metronomeEngine?.stop();
+};
+
+metronomePanel.onBpmChange = (bpm) => {
+  if (metronomeEngine) metronomeEngine.bpm = bpm;
+};
+
+metronomePanel.onTimeSigChange = (beats) => {
+  if (metronomeEngine) metronomeEngine.beatsPerMeasure = beats;
+};
+
+metronomePanel.onVolumeChange = (vol) => {
+  if (metronomeEngine) metronomeEngine.setVolume(vol);
+};
 
 /** @type {Map<number, LevelMeter>} */
 const inputMeters = new Map();
@@ -125,7 +204,7 @@ function startRenderLoop() {
       meter.draw(level.rmsDb, level.peakDb);
     }
 
-    // Pitch detection + latency (every other frame)
+    // Pitch detection (every other frame)
     pitchFrame++;
     if (pitchFrame % 2 === 0) {
       const { data, sampleRate } = engine.getPitchData();
@@ -133,8 +212,15 @@ function startRenderLoop() {
       pitchDisplay.update(freq);
       tuningPanel.update(freq);
       fingerboard.update(freq);
-      mixer.updateLatency(engine.getLatency(), engine.getBridgeLatency());
+      if (scaleTrainer.active) scaleTrainer.update(freq);
     }
+
+    // Latency display (every frame — outputLatency updates dynamically)
+    mixer.updateLatency(
+      engine.getLatency(),
+      engine.getBridgeLatency(),
+      engine.getLatencyBreakdown()
+    );
 
     animFrameId = requestAnimationFrame(renderLoop);
   }
@@ -161,6 +247,30 @@ mixer.onInputMuteToggle = (channelId) => {
 mixer.onOutputMuteToggle = (channelId) => {
   const muted = engine.toggleOutputMute(channelId);
   mixer.setOutputMuted(channelId, muted);
+};
+
+mixer.onBufferSizeChange = async (samples) => {
+  // Preserve metronome running state
+  const wasPlaying = metronomeEngine?._playing;
+  if (metronomeEngine) {
+    metronomeEngine.stop();
+    metronomeEngine = null;
+  }
+
+  const newCtx = await engine.reinitWithBufferSize(samples);
+
+  // Recreate metronome engine with new context
+  if (newCtx) {
+    metronomeEngine = new MetronomeEngine(newCtx);
+    metronomeEngine.onBeat = (beatIndex) => {
+      metronomePanel.flashBeat(beatIndex);
+    };
+    if (wasPlaying) {
+      metronomeEngine.bpm = metronomePanel.bpm;
+      metronomeEngine.beatsPerMeasure = metronomePanel.beats;
+      metronomeEngine.start();
+    }
+  }
 };
 
 // --- Boot ---

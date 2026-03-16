@@ -1,3 +1,5 @@
+import { CustomDropdown } from './custom-dropdown.js';
+
 export class DeviceSelector {
   constructor(container, label, kind) {
     this.kind = kind; // 'input' or 'output'
@@ -6,40 +8,41 @@ export class DeviceSelector {
     this.el = document.createElement('div');
     this.el.className = 'strip-device';
 
-    this.select = document.createElement('select');
-    this.select.title = `Select ${kind} device`;
-    this.select.addEventListener('change', () => {
-      this.onChange?.(this.select.value);
+    this.dropdown = new CustomDropdown(this.el, {
+      title: `Select ${kind} device`,
+      placeholder: kind === 'input' ? 'Mic...' : 'Speaker...',
     });
 
-    this.el.appendChild(this.select);
+    this.dropdown.onChange = (val) => {
+      this.onChange?.(val);
+    };
+
     container.appendChild(this.el);
   }
 
   update(devices) {
     const list = this.kind === 'input' ? devices.inputs : devices.outputs;
-    const currentValue = this.select.value;
+    const currentValue = this.dropdown.value;
 
-    // Clear options without innerHTML
-    while (this.select.firstChild) {
-      this.select.removeChild(this.select.firstChild);
-    }
+    const items = list.map(device => ({
+      value: device.deviceId,
+      label: _cleanLabel(device.label, this.kind, device.deviceId),
+    }));
 
-    list.forEach(device => {
-      const opt = document.createElement('option');
-      opt.value = device.deviceId;
-      opt.textContent = _cleanLabel(device.label, this.kind, device.deviceId);
-      this.select.appendChild(opt);
-    });
+    this.dropdown.setItems(items);
 
     // Restore selection if still available
-    if ([...this.select.options].some(o => o.value === currentValue)) {
-      this.select.value = currentValue;
+    if (items.some(i => i.value === currentValue)) {
+      this.dropdown.value = currentValue;
     }
   }
 
   get value() {
-    return this.select.value;
+    return this.dropdown.value;
+  }
+
+  set value(val) {
+    this.dropdown.value = val;
   }
 }
 

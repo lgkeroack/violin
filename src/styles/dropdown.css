@@ -1,0 +1,233 @@
+/* --- Custom Dropdown --- */
+
+.dropdown {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+/* Trigger button */
+
+.dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-family: inherit;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  min-height: 32px;
+}
+
+.dropdown-trigger:hover {
+  border-color: var(--text-secondary);
+  background: color-mix(in srgb, var(--bg-primary) 85%, var(--bg-surface));
+}
+
+.dropdown-trigger:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(30, 58, 110, 0.2);
+  outline: none;
+}
+
+.dropdown-trigger-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.dropdown-arrow {
+  flex-shrink: 0;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--text-secondary);
+  transition: transform 0.2s ease;
+}
+
+.dropdown:hover .dropdown-arrow {
+  border-top-color: var(--text-primary);
+}
+
+.dropdown.open .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.dropdown.open .dropdown-trigger {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(30, 58, 110, 0.15);
+}
+
+/* Listbox (the popup) */
+
+.dropdown-listbox {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 100%;
+  width: max-content;
+  max-width: min(360px, 90vw);
+  background: var(--bg-primary);
+  border: 1px solid var(--text-secondary);
+  border-radius: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 1000;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 4px 0;
+
+  /* Animate with opacity + slide — no distortion */
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.dropdown.open .dropdown-listbox {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  visibility: visible;
+}
+
+/* Position above when near bottom */
+.dropdown-listbox--above {
+  top: auto;
+  bottom: calc(100% + 4px);
+  transform: translateY(4px);
+}
+
+.dropdown.open .dropdown-listbox--above {
+  transform: translateY(0);
+}
+
+/* Scrollbar */
+.dropdown-listbox::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown-listbox::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 4px 0;
+}
+
+.dropdown-listbox::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+.dropdown-listbox::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Option row */
+
+.dropdown-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 12.5px;
+  line-height: 1.3;
+  color: var(--text-primary);
+  transition: background 0.08s;
+  user-select: none;
+  border-radius: 4px;
+  margin: 0 4px;
+}
+
+.dropdown-option:hover,
+.dropdown-option.focused {
+  background: rgba(30, 58, 110, 0.12);
+}
+
+.dropdown-option.selected {
+  background: rgba(30, 58, 110, 0.08);
+  font-weight: 600;
+}
+
+.dropdown-option.selected:hover,
+.dropdown-option.selected.focused {
+  background: rgba(30, 58, 110, 0.16);
+}
+
+/* Checkmark */
+.dropdown-check {
+  width: 16px;
+  font-size: 12px;
+  color: var(--accent);
+  opacity: 0;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.dropdown-option.selected .dropdown-check {
+  opacity: 1;
+}
+
+/* Option text */
+.dropdown-option-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* Group */
+
+.dropdown-group {
+  padding: 2px 0;
+}
+
+.dropdown-group + .dropdown-group {
+  border-top: 1px solid var(--border);
+  margin-top: 2px;
+  padding-top: 4px;
+}
+
+.dropdown-group-label {
+  padding: 8px 12px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-secondary);
+  user-select: none;
+}
+
+/* Empty state */
+
+.dropdown-empty {
+  padding: 16px 12px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* --- Context-specific overrides --- */
+
+/* Output strips get green focus */
+[data-kind="output"] .dropdown-trigger:focus-visible {
+  border-color: var(--green);
+  box-shadow: 0 0 0 2px rgba(34, 139, 34, 0.15);
+}
+
+[data-kind="output"] .dropdown.open .dropdown-trigger {
+  border-color: var(--green);
+  box-shadow: 0 0 0 2px rgba(34, 139, 34, 0.12);
+}
