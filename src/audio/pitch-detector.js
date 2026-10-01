@@ -15,7 +15,13 @@ export class PitchDetector {
    * Returns frequency in Hz, or null if no clear pitch.
    */
   detect(data, sampleRate) {
-    const halfLen = Math.floor(data.length / 2);
+    // Analyse only the most recent samples: an integration window of ~1024
+    // samples plus enough lag range for ~50 Hz. Keeps latency low and the
+    // O(W·τ) cost small enough for phones.
+    const tauMax = Math.min(Math.floor(data.length / 2), Math.ceil(sampleRate / 50));
+    const W = Math.min(data.length - tauMax, Math.max(1024, tauMax));
+    const offset = data.length - W - tauMax;
+    const halfLen = tauMax;
 
     // Reuse buffer
     if (!this._yinBuffer || this._yinBuffer.length !== halfLen) {
@@ -23,14 +29,20 @@ export class PitchDetector {
     }
     const yinBuffer = this._yinBuffer;
 
+    // Quick silence gate
+    let energy = 0;
+    for (let i = offset; i < offset + W + tauMax; i++) energy += data[i] * data[i];
+    if (energy / (W + tauMax) < 1e-7) return null;
+
     // Step 1: Squared difference function
     yinBuffer[0] = 0;
     for (let tau = 1; tau < halfLen; tau++) {
-      yinBuffer[tau] = 0;
-      for (let i = 0; i < halfLen; i++) {
-        const diff = data[i] - data[i + tau];
-        yinBuffer[tau] += diff * diff;
+      let sum = 0;
+      for (let i = 0; i < W; i++) {
+        const diff = data[offset + i] - data[offset + i + tau];
+        sum += diff * diff;
       }
+      yinBuffer[tau] = sum;
     }
 
     // Step 2: Cumulative mean normalized difference

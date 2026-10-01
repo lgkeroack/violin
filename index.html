@@ -2,7 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1e3a6e">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
   <title>Violin Audio Workstation</title>
   <link rel="stylesheet" href="/src/styles/main.css">
   <link rel="stylesheet" href="/src/styles/mixer.css">
@@ -10,9 +15,16 @@
   <link rel="stylesheet" href="/src/styles/dropdown.css">
   <link rel="stylesheet" href="/src/styles/metronome.css">
   <link rel="stylesheet" href="/src/styles/trainer.css">
+  <link rel="stylesheet" href="/src/styles/tabs.css">
+  <link rel="stylesheet" href="/src/styles/songplay.css">
 </head>
 <body>
-  <main id="app">
+  <nav id="app-tabs" class="app-tabs" role="tablist">
+    <button class="app-tab active" role="tab" data-tab="workstation" aria-selected="true">Workstation</button>
+    <button class="app-tab" role="tab" data-tab="songplay" aria-selected="false">Song Play</button>
+    <button id="mic-btn" class="app-mic hidden" type="button">Enable microphone</button>
+  </nav>
+  <main id="app" data-tab-panel="workstation">
     <section id="pitch-section"></section>
     <section id="tuning-section"></section>
     <section id="scale-section"></section>
@@ -20,6 +32,10 @@
     <section id="metronome-section"></section>
     <section id="fingerboard-section"></section>
     <section id="mixer-section"></section>
+  </main>
+  <main id="songplay" class="songplay hidden" data-tab-panel="songplay">
+    <section id="song-browser-section"></section>
+    <section id="song-player-section" class="hidden"></section>
   </main>
 
   <script type="module" src="/src/main.js"></script>

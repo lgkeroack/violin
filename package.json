@@ -9,6 +9,11 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/cli": "^8.5.2",
     "vite": "^6.0.0"
+  },
+  "dependencies": {
+    "@capacitor/core": "^8.5.2"
   }
 }

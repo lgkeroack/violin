@@ -11,6 +11,9 @@ import { ScalePanel } from './ui/scale-panel.js';
 import { ScaleTrainer } from './ui/scale-trainer.js';
 import { generateScaleSequence } from './audio/scale-sequence.js';
 import { MetronomePanel } from './ui/metronome-panel.js';
+import { SongBrowser } from './ui/song-browser.js';
+import { SongPlayer } from './ui/song-player.js';
+import { InputPicker, classifyInput } from './ui/input-picker.js';
 
 const engine = new AudioEngine();
 const deviceManager = new DeviceManager();
@@ -33,7 +36,155 @@ const metronomePanel = new MetronomePanel(metronomeSection);
 const fingerboard = new Fingerboard(fingerboardSection);
 const mixer = new MixerPanel(mixerSection);
 
-tuningPanel.onTuningChange = (tuningKey) => fingerboard.setTuning(tuningKey);
+tuningPanel.onTuningChange = (tuningKey) => {
+  fingerboard.setTuning(tuningKey);
+  songBrowser.setTuning(tuningKey);
+};
+
+// --- Song Play tab (Rocksmith-style) ---
+
+const songBrowserSection = document.getElementById('song-browser-section');
+const songPlayerSection = document.getElementById('song-player-section');
+const songBrowser = new SongBrowser(songBrowserSection);
+const songPlayer = new SongPlayer(songPlayerSection, { getCtx: () => engine.ctx });
+let activeTab = 'workstation';
+let wakeLock = null;
+
+async function requestWakeLock() {
+  try {
+    if ('wakeLock' in navigator && !wakeLock) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+    }
+  } catch { /* not supported or denied */ }
+}
+
+function releaseWakeLock() {
+  wakeLock?.release?.();
+  wakeLock = null;
+}
+
+function showSongPlayer(show) {
+  songBrowserSection.classList.toggle('hidden', show);
+  songPlayerSection.classList.toggle('hidden', !show);
+  document.body.classList.toggle('playing-song', show);
+}
+
+// --- Audio input picker (built-in mic, wired headset, USB interface) ---
+
+const inputPicker = new InputPicker(songBrowser.inputSlot);
+let currentInputDeviceId = null;
+let knownInputIds = new Set();
+
+function primaryInputChannel() {
+  return engine.inputs.keys().next().value;
+}
+
+function toast(text) {
+  const t = document.createElement('div');
+  t.className = 'app-toast';
+  t.textContent = text;
+  document.body.appendChild(t);
+  setTimeout(() => t.classList.add('show'), 10);
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 3200);
+}
+
+function streamDeviceId(stream) {
+  return stream?.getAudioTracks?.()[0]?.getSettings?.().deviceId || null;
+}
+
+/** Switch the primary input channel to a device (undefined = system default). */
+async function switchPrimaryInput(deviceId) {
+  const ch = primaryInputChannel();
+  if (ch == null) return false;
+  try {
+    const stream = await deviceManager.getInputStream(deviceId);
+    engine.connectInputStream(ch, stream);
+    micConnected = true;
+    currentInputDeviceId = deviceId || streamDeviceId(stream);
+    mixer.setInputDevice(ch, currentInputDeviceId);
+    inputPicker.setCurrent(currentInputDeviceId);
+    inputPicker.setChannelCount(engine.getInputChannelCount(ch));
+    updateMicButton();
+    return true;
+  } catch (err) {
+    console.warn('Failed to open input:', err.message);
+    toast('Could not open that input');
+    return false;
+  }
+}
+
+inputPicker.onDeviceChange = (id) => { unlockAudio(); switchPrimaryInput(id); };
+inputPicker.onChannelMode = (mode) => {
+  const ch = primaryInputChannel();
+  if (ch != null) engine.setInputChannelMode(ch, mode);
+};
+inputPicker.onGainChange = (v) => {
+  const ch = primaryInputChannel();
+  if (ch != null) engine.setInputGain(ch, v);
+};
+
+/** React to devices being plugged in / unplugged (headset jack, USB-C/OTG). */
+async function handleDevicesChanged(devs) {
+  mixer.updateDevices(devs);
+  const inputs = devs.inputs.filter(d => d.deviceId);
+  const added = inputs.filter(d => !knownInputIds.has(d.deviceId) && d.deviceId !== 'default');
+  const hadKnown = knownInputIds.size > 0;
+  knownInputIds = new Set(inputs.map(d => d.deviceId));
+  inputPicker.setDevices(inputs, currentInputDeviceId);
+
+  const external = added.find(d => ['usb', 'wired'].includes(classifyInput(d)));
+  if (hadKnown && external) {
+    if (await switchPrimaryInput(external.deviceId)) toast(`Switched input to ${external.label || 'external device'}`);
+    return;
+  }
+  // Current device unplugged → fall back to the system default
+  if (currentInputDeviceId && !knownInputIds.has(currentInputDeviceId)) {
+    if (await switchPrimaryInput(undefined)) toast('Input unplugged, using the default microphone');
+  }
+}
+
+songBrowser.onPlay = (song, chart, opts) => {
+  unlockAudio();
+  showSongPlayer(true);
+  requestWakeLock();
+  // Let layout settle so the canvas measures its real size
+  requestAnimationFrame(() => songPlayer.start(song, chart, opts));
+};
+
+songPlayer.onExit = () => {
+  showSongPlayer(false);
+  releaseWakeLock();
+  songBrowser.updateProgress();
+};
+
+songPlayer.onRiffRequest = (song, from, to) => {
+  songBrowser.openRiff(song, from, to);
+};
+
+function switchTab(tab) {
+  if (tab === activeTab) return;
+  if (activeTab === 'songplay' && songPlayer.active) songPlayer.pause();
+  activeTab = tab;
+  for (const btn of document.querySelectorAll('.app-tab')) {
+    const on = btn.dataset.tab === tab;
+    btn.classList.toggle('active', on);
+    btn.setAttribute('aria-selected', String(on));
+  }
+  for (const panel of document.querySelectorAll('[data-tab-panel]')) {
+    panel.classList.toggle('hidden', panel.dataset.tabPanel !== tab);
+  }
+  document.body.classList.toggle('tab-songplay', tab === 'songplay');
+  try { localStorage.setItem('vaw.activeTab', tab); } catch { /* ignore */ }
+}
+
+for (const btn of document.querySelectorAll('.app-tab')) {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+}
+try {
+  const saved = localStorage.getItem('vaw.activeTab');
+  if (saved === 'songplay') switchTab('songplay');
+} catch { /* ignore */ }
 
 scalePanel.onScaleChange = (scaleData) => fingerboard.setScale(scaleData);
 
@@ -150,6 +301,11 @@ async function switchInputDevice(channelId, deviceId) {
   try {
     const stream = await deviceManager.getInputStream(deviceId);
     engine.switchInputDevice(channelId, stream);
+    if (channelId === primaryInputChannel()) {
+      currentInputDeviceId = deviceId;
+      inputPicker.setCurrent(deviceId);
+      inputPicker.setChannelCount(engine.getInputChannelCount(channelId));
+    }
   } catch (err) {
     console.error('Failed to switch input device:', err);
   }
@@ -192,35 +348,50 @@ function startRenderLoop() {
 
   let pitchFrame = 0;
   function renderLoop() {
-    // Draw all input meters
-    for (const [channelId, meter] of inputMeters) {
-      const level = engine.getInputLevel(channelId);
-      meter.draw(level.rmsDb, level.peakDb);
+    const onWorkstation = activeTab === 'workstation';
+    const songActive = activeTab === 'songplay' && songPlayer.active;
+
+    if (onWorkstation) {
+      // Draw all input meters
+      for (const [channelId, meter] of inputMeters) {
+        const level = engine.getInputLevel(channelId);
+        meter.draw(level.rmsDb, level.peakDb);
+      }
+
+      // Draw all output meters
+      for (const [channelId, meter] of outputMeters) {
+        const level = engine.getOutputLevel(channelId);
+        meter.draw(level.rmsDb, level.peakDb);
+      }
     }
 
-    // Draw all output meters
-    for (const [channelId, meter] of outputMeters) {
-      const level = engine.getOutputLevel(channelId);
-      meter.draw(level.rmsDb, level.peakDb);
+    if (activeTab === 'songplay' && !songActive && pitchFrame % 3 === 0) {
+      const ch = primaryInputChannel();
+      if (ch != null) inputPicker.updateLevel(engine.getInputLevel(ch).rmsDb);
     }
 
-    // Pitch detection (every other frame)
+    // Pitch detection (every frame while a song is playing, otherwise every other frame)
     pitchFrame++;
-    if (pitchFrame % 2 === 0) {
+    if (songActive || (onWorkstation && pitchFrame % 2 === 0)) {
       const { data, sampleRate } = engine.getPitchData();
       const freq = pitchDetector.detect(data, sampleRate);
-      pitchDisplay.update(freq);
-      tuningPanel.update(freq);
-      fingerboard.update(freq);
-      if (scaleTrainer.active) scaleTrainer.update(freq);
+      if (onWorkstation) {
+        pitchDisplay.update(freq);
+        tuningPanel.update(freq);
+        fingerboard.update(freq);
+        if (scaleTrainer.active) scaleTrainer.update(freq);
+      }
+      if (songActive) songPlayer.update(freq);
     }
 
     // Latency display (every frame — outputLatency updates dynamically)
-    mixer.updateLatency(
-      engine.getLatency(),
-      engine.getBridgeLatency(),
-      engine.getLatencyBreakdown()
-    );
+    if (onWorkstation) {
+      mixer.updateLatency(
+        engine.getLatency(),
+        engine.getBridgeLatency(),
+        engine.getLatencyBreakdown()
+      );
+    }
 
     animFrameId = requestAnimationFrame(renderLoop);
   }
@@ -273,6 +444,58 @@ mixer.onBufferSizeChange = async (samples) => {
   }
 };
 
+// --- Mobile / autoplay handling ---
+
+const isTouchDevice = window.matchMedia?.('(pointer: coarse)').matches ?? false;
+const micBtn = document.getElementById('mic-btn');
+let micConnected = false;
+
+/** Resume the AudioContext on any user gesture (required on mobile browsers). */
+function unlockAudio() {
+  if (engine.ctx && engine.ctx.state !== 'running') {
+    engine.ctx.resume().catch(() => {});
+  }
+  updateMicButton();
+}
+for (const ev of ['pointerdown', 'touchend', 'keydown']) {
+  window.addEventListener(ev, unlockAudio, { passive: true });
+}
+
+function updateMicButton() {
+  const needsAudio = engine.ctx && engine.ctx.state !== 'running';
+  const show = !micConnected || needsAudio;
+  micBtn.classList.toggle('hidden', !show);
+  micBtn.textContent = !micConnected ? 'Enable microphone' : 'Tap to start audio';
+}
+
+micBtn.addEventListener('click', async () => {
+  unlockAudio();
+  if (!micConnected) await connectDefaultMic();
+  updateMicButton();
+});
+
+/** Connect the default microphone to the first input channel. */
+async function connectDefaultMic() {
+  try {
+    const stream = await deviceManager.getInputStream();
+    let channelId = engine.inputs.keys().next().value;
+    if (channelId == null) channelId = await addInput();
+    engine.connectInputStream(channelId, stream);
+    micConnected = true;
+    currentInputDeviceId = streamDeviceId(stream);
+    try {
+      const devices = await deviceManager.enumerate();
+      mixer.updateDevices(devices);
+      knownInputIds = new Set(devices.inputs.map(d => d.deviceId).filter(Boolean));
+      inputPicker.setDevices(devices.inputs.filter(d => d.deviceId), currentInputDeviceId);
+      mixer.setInputDevice(channelId, currentInputDeviceId);
+    } catch { /* ignore */ }
+  } catch (err) {
+    console.warn('Microphone unavailable:', err.message);
+    micBtn.textContent = 'Microphone blocked: check permissions';
+  }
+}
+
 // --- Boot ---
 
 async function boot() {
@@ -292,7 +515,8 @@ async function boot() {
 
   mixer.updateDevices(devices);
   deviceManager.listenForChanges();
-  deviceManager.onDevicesChanged = (devs) => mixer.updateDevices(devs);
+  deviceManager.onDevicesChanged = (devs) => handleDevicesChanged(devs);
+  knownInputIds = new Set(devices.inputs.map(d => d.deviceId).filter(Boolean));
 
   // Auto-add one input + one output
   const firstInputId = devices.inputs.length > 0
@@ -304,7 +528,31 @@ async function boot() {
 
   // These individually catch their own errors, so one failing won't block the other
   await addInput(firstInputId);
-  await addOutput(firstOutputId);
+  micConnected = [...engine.inputs.values()].some(ch => ch.stream);
+  if (!micConnected && devices.inputs.length > 0) await connectDefaultMic();
+
+  // Prefer an external wired/USB input if one is already plugged in
+  const firstCh = engine.inputs.get(primaryInputChannel());
+  currentInputDeviceId = streamDeviceId(firstCh?.stream) || firstInputId || null;
+  const ext = devices.inputs.find(d => ['usb', 'wired'].includes(classifyInput(d)));
+  if (ext && ext.deviceId !== currentInputDeviceId) await switchPrimaryInput(ext.deviceId);
+  inputPicker.setDevices(devices.inputs.filter(d => d.deviceId), currentInputDeviceId);
+  inputPicker.setChannelCount(engine.getInputChannelCount(primaryInputChannel()));
+  const outId = await addOutput(firstOutputId);
+
+  // On phones/tablets the speaker sits next to the mic: monitoring the input
+  // through it causes feedback, so start with the output monitor muted.
+  if (isTouchDevice && outId != null && outId !== -1) {
+    const muted = engine.toggleOutputMute(outId);
+    mixer.setOutputMuted(outId, muted);
+  }
+  updateMicButton();
+  engine.ctx?.addEventListener?.('statechange', updateMicButton);
 }
 
 boot();
+
+// Debug/test hook (dev server only)
+if (import.meta.env?.DEV) {
+  window.__vaw = { engine, songBrowser, songPlayer, inputPicker };
+}

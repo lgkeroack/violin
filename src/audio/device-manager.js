@@ -29,6 +29,9 @@ export class DeviceManager {
       echoCancellation: { ideal: false },
       noiseSuppression: { ideal: false },
       autoGainControl: { ideal: false },
+      // Stereo when available (USB interfaces), lowest possible latency
+      channelCount: { ideal: 2 },
+      latency: { ideal: 0 },
     };
     if (deviceId) {
       audioConstraints.deviceId = { exact: deviceId };

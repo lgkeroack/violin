@@ -78,9 +78,44 @@ export class AudioEngine {
     }
 
     const source = this.ctx.createMediaStreamSource(stream);
-    source.connect(ch.gain);
     ch.source = source;
     ch.stream = stream;
+    this._routeSource(ch, ch.gain);
+  }
+
+  /**
+   * Connect a channel's source to its gain, honouring the channel mode.
+   * USB audio interfaces often deliver the instrument on one side of a
+   * stereo pair; picking that side avoids a -6 dB mono downmix.
+   */
+  _routeSource(ch, gain) {
+    if (!ch.source) return;
+    try { ch.source.disconnect(); } catch { /* not connected */ }
+    if (ch.splitter) { try { ch.splitter.disconnect(); } catch { /* ignore */ } }
+    ch.splitter = null;
+    const mode = ch.channelMode || 'mix';
+    if (mode === 'left' || mode === 'right') {
+      const splitter = this.ctx.createChannelSplitter(2);
+      ch.source.connect(splitter);
+      splitter.connect(gain, mode === 'left' ? 0 : 1);
+      ch.splitter = splitter;
+    } else {
+      ch.source.connect(gain);
+    }
+  }
+
+  /** @param {'mix'|'left'|'right'} mode */
+  setInputChannelMode(channelId, mode) {
+    const ch = this.inputs.get(channelId);
+    if (!ch) return;
+    ch.channelMode = mode;
+    this._routeSource(ch, ch.gain);
+  }
+
+  /** Channel count of the current stream (1 = mono, 2 = stereo). */
+  getInputChannelCount(channelId) {
+    const track = this.inputs.get(channelId)?.stream?.getAudioTracks?.()[0];
+    return track?.getSettings?.().channelCount || 1;
   }
 
   /**
@@ -89,9 +124,10 @@ export class AudioEngine {
   removeInput(channelId) {
     const ch = this.inputs.get(channelId);
     if (!ch) return;
-    ch.source.disconnect();
+    ch.source?.disconnect();
+    ch.splitter?.disconnect();
     ch.gain.disconnect();
-    ch.stream.getTracks().forEach(t => t.stop());
+    ch.stream?.getTracks().forEach(t => t.stop());
     this.inputs.delete(channelId);
   }
 
@@ -418,8 +454,9 @@ export class AudioEngine {
       if (saved.stream && saved.stream.active) {
         try {
           const source = this.ctx.createMediaStreamSource(saved.stream);
-          source.connect(gain);
           ch.source = source;
+          ch.splitter = null;
+          this._routeSource(ch, gain);
         } catch (err) {
           console.warn('Failed to reconnect stream after reinit:', err);
           ch.source = null;

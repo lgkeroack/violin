@@ -320,6 +320,11 @@ export class MixerPanel {
     if (strip) strip.muteBtn.classList.toggle('muted', muted);
   }
 
+  setInputDevice(channelId, deviceId) {
+    const strip = this.inputStrips.get(channelId);
+    if (strip && deviceId) strip.deviceSelector.value = deviceId;
+  }
+
   setOutputMuted(channelId, muted) {
     const strip = this.outputStrips.get(channelId);
     if (strip) strip.muteBtn.classList.toggle('muted', muted);

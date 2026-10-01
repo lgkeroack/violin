@@ -1,0 +1,13 @@
+{
+  "name": "Violin Audio Workstation",
+  "short_name": "Violin AW",
+  "description": "Tuner, scale trainer, metronome and a Rocksmith-style Song Play mode for violin and other bowed strings.",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a1020",
+  "theme_color": "#1e3a6e",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
