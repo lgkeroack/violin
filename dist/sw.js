@@ -1,6 +1,6 @@
 /* Violin Audio Workstation service worker (generated at build time). */
-const VERSION = "1.2.0-mur9rko1";
-const PRECACHE = ["./","assets/index-PkiR1-64.css","assets/index-CjBKy9IX.js","assets/web-BudVmuCF.js","manifest.webmanifest","icon.svg","icon-192.png","icon-512.png","icon-maskable-512.png","apple-touch-icon.png"];
+const VERSION = "1.2.0-mura1ys6";
+const PRECACHE = ["./","assets/index-PkiR1-64.css","assets/index-Dq7eicS9.js","assets/web-O_9CMIW7.js","manifest.webmanifest","icon.svg","icon-192.png","icon-512.png","icon-maskable-512.png","apple-touch-icon.png"];
 const CACHE = `vaw-${VERSION}`;
 
 self.addEventListener('install', (event) => {

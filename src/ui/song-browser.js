@@ -85,11 +85,7 @@ export class SongBrowser {
     this._tabBtns = {};
     for (const [id, label] of [['library', 'Library'], ['mine', 'My Songs'], ['online', 'Find Online'], ['import', 'Import']]) {
       const b = el('button', 'sb-tab', label);
-      b.addEventListener('click', () => {
-        if (this._view !== id) this._query = '';
-        this._view = id;
-        this.refresh();
-      });
+      b.addEventListener('click', () => this.showView(id));
       tabs.appendChild(b);
       this._tabBtns[id] = b;
     }
@@ -123,6 +119,23 @@ export class SongBrowser {
     root.appendChild(body);
 
     this.container.appendChild(root);
+  }
+
+  /**
+   * Switch to a section (Library / My Songs / Find Online / Import).
+   * Always starts that section fresh: closes any open song and clears the search,
+   * since clicking a section tab means the player wants to leave what they were viewing.
+   */
+  showView(id) {
+    this._view = id;
+    this._query = '';
+    this._selected = null;
+    this._onlineAutoRun = true;
+    this._onlineQuery = '';
+    this._onlineType = '';
+    this.root.classList.remove('detail-open');
+    this.refresh();
+    this.root.scrollIntoView?.({ block: 'start' });
   }
 
   refresh() {
