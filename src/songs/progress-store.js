@@ -64,7 +64,7 @@ export function saveUserSongs(list) {
 }
 
 export function getSettings() {
-  return {
+  const settings = {
     tolerance: 35,       // cents
     latencyMs: 80,       // input/A-V offset compensation
     guideVolume: 0.35,
@@ -78,6 +78,13 @@ export function getSettings() {
     masterMode: true,
     ...load(SETTINGS_KEY, {}),
   };
+  // Highway elements are always on (no longer user-toggleable); ignore any
+  // value saved by an earlier version.
+  settings.guide = true;
+  settings.click = true;
+  settings.backing = true;
+  settings.showNoteNames = true;
+  return settings;
 }
 
 export function saveSettings(s) {

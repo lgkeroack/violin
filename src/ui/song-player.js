@@ -134,7 +134,7 @@ export class SongPlayer {
     this.btnPause.addEventListener('click', () => (this._state === 'paused' ? this.resume() : this.pause()));
     this.btnRestart = el('button', 'sp-btn', 'Restart');
     this.btnRestart.addEventListener('click', () => this.restart());
-    this.btnExit = el('button', 'sp-btn', 'Library');
+    this.btnExit = el('button', 'sp-btn sp-exit', 'Library');
     this.btnExit.addEventListener('click', () => this.exit());
 
     const speedWrap = el('label', 'sp-speed');
@@ -149,24 +149,7 @@ export class SongPlayer {
     this.speedInput.addEventListener('input', () => this._setSpeed(Number(this.speedInput.value) / 100));
     speedWrap.append(this.speedInput, this.speedVal);
 
-    const toggles = el('div', 'sp-toggles');
-    const mkToggle = (key, label) => {
-      const b = el('button', 'sp-chip', label);
-      b.setAttribute('aria-pressed', String(!!this.settings[key]));
-      b.addEventListener('click', () => {
-        this.settings[key] = !this.settings[key];
-        b.setAttribute('aria-pressed', String(this.settings[key]));
-        saveSettings(this.settings);
-        this._applyVolumes();
-      });
-      toggles.appendChild(b);
-    };
-    mkToggle('guide', 'Guide melody');
-    mkToggle('backing', 'Backing');
-    mkToggle('click', 'Click');
-    mkToggle('showNoteNames', 'Note names');
-
-    controls.append(this.btnPause, this.btnRestart, speedWrap, toggles, this.btnExit);
+    controls.append(this.btnPause, this.btnRestart, speedWrap, this.btnExit);
 
     root.append(hud, this.timeline, stage, controls);
     this.container.appendChild(root);
