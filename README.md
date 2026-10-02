@@ -38,6 +38,18 @@ Every song is arranged automatically for the selected instrument (violin, viola,
 - On touch devices, input monitoring through the speaker starts muted to avoid feedback. Use headphones if you want the guide melody or backing.
 - Bluetooth mics work but add a lot of delay, so wired or USB is recommended.
 
+## Install as a web app (PWA)
+
+The app is published to GitHub Pages at **https://lgkeroack.github.io/violin/**. Every push to `main` that changes the web app redeploys it (`.github/workflows/pages.yml`).
+
+- **Android (Chrome):** open the link and tap **Install app** in the tab bar, or use Chrome's menu → *Add to Home screen*.
+- **iPhone/iPad (Safari):** tap Share → *Add to Home Screen*.
+- **Desktop (Chrome/Edge):** use the install icon in the address bar.
+
+The installed app opens full screen, works offline after the first load (a service worker caches it), and updates itself. When a new version has downloaded, a banner offers **Reload**. If you dismiss it, the update applies the next time the app starts.
+
+The microphone, wired headsets and USB audio interfaces work in the browser the same way they do in the APK. *Find Online* still needs an internet connection.
+
 ## Development
 
 ```bash

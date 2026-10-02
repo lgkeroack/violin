@@ -119,3 +119,18 @@ body.tab-songplay .app-version { color: #8592b3; }
   min-height: 36px;
 }
 .app-update button.secondary { background: transparent; color: #b6c2e2; border: 1px solid #3a4c7c; }
+
+.app-install {
+  margin-left: auto;
+  margin-bottom: 6px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: transparent;
+  color: var(--accent);
+  font: 700 12px system-ui, sans-serif;
+  cursor: pointer;
+}
+.app-install:not(.hidden) ~ .app-version { margin-left: 10px; }
+.app-mic:not(.hidden) ~ .app-install { margin-left: 10px; }
+body.tab-songplay .app-install { color: #8ab4ff; border-color: #3a4c7c; }

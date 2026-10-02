@@ -15,6 +15,7 @@ import { SongBrowser } from './ui/song-browser.js';
 import { SongPlayer } from './ui/song-player.js';
 import { InputPicker, classifyInput } from './ui/input-picker.js';
 import { initLiveUpdates, getVersionInfo } from './native/live-update.js';
+import { initPwa } from './pwa/register.js';
 
 // --- Live updates (Android app): confirm this bundle booted, then check for a newer one ---
 
@@ -27,9 +28,9 @@ function showUpdateBanner(info) {
     text.textContent = `Version ${info.version} needs a newer app install. Download the latest APK from GitHub.`;
     bar.appendChild(text);
   } else {
-    text.textContent = `Update ${info.version} downloaded.`;
+    text.textContent = info.customText || `Update ${info.version} downloaded.`;
     const now = document.createElement('button');
-    now.textContent = 'Restart now';
+    now.textContent = info.actionLabel || 'Restart now';
     now.addEventListener('click', () => info.apply?.());
     bar.append(text, now);
   }
@@ -42,6 +43,9 @@ function showUpdateBanner(info) {
 }
 
 initLiveUpdates({ onReady: showUpdateBanner });
+initPwa({
+  notify: ({ text, action, onAction }) => showUpdateBanner({ version: '', customText: text, actionLabel: action, apply: onAction }),
+});
 getVersionInfo().then(({ bundle, native }) => {
   const el = document.getElementById('app-version');
   if (el) el.textContent = native === 'web' ? `v${bundle}` : `v${bundle} · app ${native}`;

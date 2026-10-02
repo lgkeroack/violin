@@ -8,6 +8,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Violin Audio Workstation</title>
   <link rel="stylesheet" href="/src/styles/main.css">
   <link rel="stylesheet" href="/src/styles/mixer.css">
@@ -23,6 +25,7 @@
     <button class="app-tab active" role="tab" data-tab="workstation" aria-selected="true">Workstation</button>
     <button class="app-tab" role="tab" data-tab="songplay" aria-selected="false">Song Play</button>
     <button id="mic-btn" class="app-mic hidden" type="button">Enable microphone</button>
+    <button id="install-btn" class="app-install hidden" type="button">Install app</button>
     <span id="app-version" class="app-version"></span>
   </nav>
   <main id="app" data-tab-panel="workstation">
