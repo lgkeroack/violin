@@ -28,9 +28,12 @@ export function initPwa({ notify } = {}) {
 
   if (!('serviceWorker' in navigator) || !import.meta.env.PROD) return;
 
+  // Reload when an updated worker takes over — but not on the very first
+  // install, where clients.claim() also fires controllerchange.
+  const hadController = !!navigator.serviceWorker.controller;
   let reloading = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (reloading) return;
+    if (reloading || !hadController) return;
     reloading = true;
     window.location.reload();
   });
