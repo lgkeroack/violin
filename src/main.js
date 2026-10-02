@@ -14,6 +14,38 @@ import { MetronomePanel } from './ui/metronome-panel.js';
 import { SongBrowser } from './ui/song-browser.js';
 import { SongPlayer } from './ui/song-player.js';
 import { InputPicker, classifyInput } from './ui/input-picker.js';
+import { initLiveUpdates, getVersionInfo } from './native/live-update.js';
+
+// --- Live updates (Android app): confirm this bundle booted, then check for a newer one ---
+
+function showUpdateBanner(info) {
+  document.querySelector('.app-update')?.remove();
+  const bar = document.createElement('div');
+  bar.className = 'app-update';
+  const text = document.createElement('span');
+  if (info.needsApk) {
+    text.textContent = `Version ${info.version} needs a newer app install. Download the latest APK from GitHub.`;
+    bar.appendChild(text);
+  } else {
+    text.textContent = `Update ${info.version} downloaded.`;
+    const now = document.createElement('button');
+    now.textContent = 'Restart now';
+    now.addEventListener('click', () => info.apply?.());
+    bar.append(text, now);
+  }
+  const later = document.createElement('button');
+  later.className = 'secondary';
+  later.textContent = info.needsApk ? 'OK' : 'Later';
+  later.addEventListener('click', () => bar.remove());
+  bar.appendChild(later);
+  document.body.appendChild(bar);
+}
+
+initLiveUpdates({ onReady: showUpdateBanner });
+getVersionInfo().then(({ bundle, native }) => {
+  const el = document.getElementById('app-version');
+  if (el) el.textContent = native === 'web' ? `v${bundle}` : `v${bundle} · app ${native}`;
+});
 
 const engine = new AudioEngine();
 const deviceManager = new DeviceManager();

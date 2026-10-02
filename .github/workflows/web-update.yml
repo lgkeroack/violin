@@ -1,0 +1,92 @@
+name: Live web update
+
+# Publishes the web app as an over-the-air update bundle for the Android app.
+# The app checks releases/download/web-latest/update.json on launch.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'index.html'
+      - 'vite.config.js'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: web-update
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: |
+          rm -rf node_modules
+          npm ci
+
+      - name: Compute versions
+        id: ver
+        run: |
+          BASE=$(node -p "require('./package.json').version.split('.').slice(0,2).join('.')")
+          VERSION="$BASE.${{ github.run_number }}"
+          MIN_NATIVE=$(grep -oP 'versionName "\K[^"]+' android/app/build.gradle)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "min_native=$MIN_NATIVE" >> "$GITHUB_OUTPUT"
+          echo "Bundle $VERSION (requires app >= $MIN_NATIVE)"
+
+      - name: Build web bundle
+        env:
+          APP_VERSION: ${{ steps.ver.outputs.version }}
+        run: npx vite build
+
+      - name: Zip bundle and write manifest
+        id: pkg
+        run: |
+          VERSION=${{ steps.ver.outputs.version }}
+          ZIP="bundle-$VERSION.zip"
+          (cd dist && zip -qr "../$ZIP" .)
+          SUM=$(sha256sum "$ZIP" | cut -d' ' -f1)
+          NOTES=$(git log -1 --pretty=%s | head -c 200)
+          node -e '
+            const [v, zip, sum, minNative, notes, repo] = process.argv.slice(1);
+            const m = {
+              version: v,
+              url: `https://github.com/${repo}/releases/download/web-latest/${zip}`,
+              checksum: sum,
+              minNative,
+              notes,
+              published: new Date().toISOString(),
+            };
+            require("fs").writeFileSync("update.json", JSON.stringify(m, null, 2));
+          ' "$VERSION" "$ZIP" "$SUM" "${{ steps.ver.outputs.min_native }}" "$NOTES" "${{ github.repository }}"
+          cat update.json
+          echo "zip=$ZIP" >> "$GITHUB_OUTPUT"
+
+      - name: Publish to the web-latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh release view web-latest >/dev/null 2>&1; then
+            gh release create web-latest --prerelease --title "Live web update" \
+              --notes "Over-the-air update channel for the Android app. Updated automatically on every push to main."
+          fi
+          # Upload the new bundle first, then the manifest that points at it
+          gh release upload web-latest "${{ steps.pkg.outputs.zip }}" --clobber
+          gh release upload web-latest update.json --clobber
+          # Remove older bundles
+          gh release view web-latest --json assets -q '.assets[].name' \
+            | grep '^bundle-.*\.zip$' | grep -vx "${{ steps.pkg.outputs.zip }}" \
+            | xargs -r -I{} gh release delete-asset web-latest {} -y

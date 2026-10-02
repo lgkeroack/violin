@@ -50,6 +50,20 @@ npm run build      # production build in dist/
 
 A prebuilt, signed APK is in [`releases/`](releases/). To install it, copy it to the phone, open it, and allow installs from that source.
 
+### Automatic updates (no new APK needed)
+
+The app updates itself over the air using the open-source [`@capgo/capacitor-updater`](https://github.com/Cap-go/capacitor-updater) plugin, self-hosted on GitHub Releases. No account or third-party service is involved, and update statistics reporting is turned off.
+
+1. Every push to `main` that changes the web app runs the **Live web update** workflow (`.github/workflows/web-update.yml`).
+2. The workflow builds the app, zips it, and publishes `bundle-<version>.zip` and `update.json` to the [`web-latest`](https://github.com/lgkeroack/violin/releases/tag/web-latest) release.
+3. On launch, and when you come back to it after 30+ minutes, the app checks `update.json`. If there's a newer version it downloads it in the background and verifies its SHA-256 checksum.
+4. A banner offers **Restart now**. Otherwise the update applies the next time the app restarts.
+5. If an update fails to start, the app rolls back to the previous version automatically.
+
+The tab bar shows the running version (`v1.2.<build> · app 1.2.0`).
+
+Native changes still need a new APK: new permissions, native plugins, or icons. To ship one, bump `versionName`/`versionCode` in `android/app/build.gradle`. Bundles built after that record the new `versionName` as their minimum app version, so older installs show a "download the latest APK" message instead of loading an incompatible update. Sign the new APK with the same key so it installs over the old one.
+
 To build it yourself (requires the Android SDK and JDK 21):
 
 ```bash

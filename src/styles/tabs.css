@@ -75,3 +75,47 @@ body.tab-songplay .app-tab.active { background: #111a30; color: #fff; border-col
 @media (max-height: 500px) {
   body.playing-song .app-tabs { display: none; }
 }
+
+.app-version {
+  margin-left: auto;
+  margin-bottom: 8px;
+  font: 11px system-ui, sans-serif;
+  color: var(--text-secondary);
+  opacity: 0.7;
+  white-space: nowrap;
+}
+.app-mic:not(.hidden) + .app-version { margin-left: 10px; }
+body.tab-songplay .app-version { color: #8592b3; }
+
+/* Live-update banner */
+.app-update {
+  position: fixed;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: calc(100vw - 24px);
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: #1d2a4b;
+  border: 1px solid #3a4c7c;
+  color: #fff;
+  font: 600 13px system-ui, sans-serif;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+.app-update button {
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font: 700 13px system-ui, sans-serif;
+  background: #ff8c1a;
+  color: #1a0f00;
+  cursor: pointer;
+  min-height: 36px;
+}
+.app-update button.secondary { background: transparent; color: #b6c2e2; border: 1px solid #3a4c7c; }
