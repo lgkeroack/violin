@@ -74,7 +74,7 @@ The app updates itself over the air using the open-source [`@capgo/capacitor-upd
 
 The tab bar shows the running version (`v1.2.<build> · app 1.2.0`).
 
-Native changes still need a new APK: new permissions, native plugins, or icons. To ship one, bump `versionName`/`versionCode` in `android/app/build.gradle`. Bundles built after that record the new `versionName` as their minimum app version, so older installs show a "download the latest APK" message instead of loading an incompatible update. Sign the new APK with the same key so it installs over the old one.
+Native changes still need a new APK: new permissions, native plugins, or the launcher icon. To ship one, bump `versionName`/`versionCode` in `android/app/build.gradle` and sign it with the same key so it installs over the old one. If the web app starts depending on that new native code, also raise `android/min-native-version`. Older installs then show a "download the latest APK" message instead of loading an update they can't run.
 
 To build it yourself (requires the Android SDK and JDK 21):
 

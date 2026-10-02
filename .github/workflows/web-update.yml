@@ -42,7 +42,9 @@ jobs:
         run: |
           BASE=$(node -p "require('./package.json').version.split('.').slice(0,2).join('.')")
           VERSION="$BASE.${{ github.run_number }}"
-          MIN_NATIVE=$(grep -oP 'versionName "\K[^"]+' android/app/build.gradle)
+          # Oldest installed app version that can run this bundle. Raise it only when a
+          # web change depends on new native code (permissions, plugins).
+          MIN_NATIVE=$(tr -d '[:space:]' < android/min-native-version)
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "min_native=$MIN_NATIVE" >> "$GITHUB_OUTPUT"
           echo "Bundle $VERSION (requires app >= $MIN_NATIVE)"

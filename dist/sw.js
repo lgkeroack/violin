@@ -1,5 +1,5 @@
 /* Violin Audio Workstation service worker (generated at build time). */
-const VERSION = "1.2.0-mur8iapw";
+const VERSION = "1.2.0-mur8mqef";
 const PRECACHE = ["./","assets/index-BAirmTno.css","assets/index-B6oZAXeq.js","assets/web-Jw2QXGHj.js","manifest.webmanifest","icon.svg","icon-192.png","icon-512.png","icon-maskable-512.png","apple-touch-icon.png"];
 const CACHE = `vaw-${VERSION}`;
 
