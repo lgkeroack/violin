@@ -78,7 +78,7 @@ export class SongBrowser {
     // Top bar
     const top = el('div', 'sb-top');
     const brand = el('div', 'sb-brand');
-    brand.append(el('div', 'sb-brand-title', 'Song Play'), el('div', 'sb-brand-sub', 'Pick a song · play along · level up'));
+    brand.append(el('div', 'sb-brand-title', 'Song Play'));
     top.appendChild(brand);
 
     const tabs = el('div', 'sb-tabs');
@@ -286,7 +286,6 @@ export class SongBrowser {
     if (!song) {
       const hint = el('div', 'sb-detail-empty');
       hint.append(el('div', 'sb-detail-empty-title', 'Choose a song'));
-      hint.append(el('p', null, 'Notes fly toward you on a 3D highway: colours are strings, numbers are fingers. Play them in tune and on time. In Learn a Song mode the difficulty adapts phrase by phrase as you improve.'));
       pane.appendChild(hint);
       return;
     }
@@ -317,7 +316,7 @@ export class SongBrowser {
     stat('Difficulty', `${meta.difficulty.score}/10`);
     stat('Notes', String(meta.notes));
     stat('Length', fmtDur(meta.duration));
-    stat('Tempo', `♩=${meta.tempo}`);
+    stat('Tempo (bpm)', String(meta.tempo));
     stat('Key', meta.key);
     stat('Positions', meta.maxPosition > 1 ? `1st–${meta.maxPosition}${['', 'st', 'nd', 'rd'][meta.maxPosition] || 'th'}` : '1st');
     pane.appendChild(stats);
@@ -371,7 +370,6 @@ export class SongBrowser {
 
     const learn = el('div', 'sb-mode');
     learn.append(el('div', 'sb-mode-title', 'Learn a Song'));
-    learn.append(el('div', 'sb-mode-desc', 'Starts simple. Each phrase you nail adds more notes, until you are playing every note. Mastered phrases fade out (Master Mode) so you play from memory.'));
     const learnBtn = el('button', 'sb-btn sb-btn-primary', 'Play');
     learnBtn.addEventListener('click', () => this.onPlay?.(song, chart, { mode: 'learn' }));
     learn.appendChild(learnBtn);
@@ -379,7 +377,6 @@ export class SongBrowser {
 
     const score = el('div', 'sb-mode');
     score.append(el('div', 'sb-mode-title', 'Score Attack'));
-    score.append(el('div', 'sb-mode-desc', 'Fixed difficulty. Build streaks for a ×4 multiplier. Miss three notes in a row and you take a strike. Too many strikes and the song ends.'));
     const sbtns = el('div', 'sb-btn-row');
     for (const [d, label] of [['easy', 'Easy'], ['medium', 'Medium'], ['hard', 'Hard'], ['master', 'Master']]) {
       const b = el('button', 'sb-btn', label);
@@ -394,7 +391,6 @@ export class SongBrowser {
 
     const riff = el('div', 'sb-mode');
     riff.append(el('div', 'sb-mode-title', 'Riff Repeater'));
-    riff.append(el('div', 'sb-mode-desc', 'Loop any phrases at your own speed and level. Speed Trainer adds 5% each time you clear a loop with 90% accuracy.'));
     const rgrid = el('div', 'sb-riff-grid');
     const phraseItems = chart.phrases.map((p, i) => ({ value: String(i), label: `${i + 1}. ${p.name}` }));
     const fromWrap = el('div', 'sb-dd sb-dd--small');

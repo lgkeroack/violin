@@ -17,10 +17,12 @@ import { getProgress, saveProgress, getSettings, saveSettings } from '../songs/p
  */
 
 const STRING_COLORS = {
-  C: '#3ddc84', G: '#ff8c1a', D: '#2e8fff', A: '#ffd23f', E: '#ff3b55',
-  B: '#b061ff', 'F#': '#ff5fd2', 'C#': '#3ddcc4', F: '#ff5fd2',
+  // Workstation palette: muted, ink-like hues that read on the navy stage
+  C: '#5fae6a', G: '#d9894a', D: '#5b93d6', A: '#d8b04a', E: '#cf5c5c',
+  B: '#9b7fcf', 'F#': '#c97aa8', 'C#': '#5fb0a8', F: '#c97aa8',
 };
-const FALLBACK_COLORS = ['#ff8c1a', '#2e8fff', '#ffd23f', '#ff3b55', '#b061ff', '#3ddc84'];
+const FALLBACK_COLORS = ['#d9894a', '#5b93d6', '#d8b04a', '#cf5c5c', '#9b7fcf', '#5fae6a'];
+const FONT = "Georgia, 'Palatino Linotype', Palatino, serif";
 
 const LOOKAHEAD = 2.6;    // seconds of real time visible on the highway
 const EARLY = 0.16;       // hit window before the note (real seconds)
@@ -240,7 +242,7 @@ export class SongPlayer {
     const modeLabel = mode === 'learn' ? 'Learn a Song'
       : mode === 'score' ? `Score Attack · ${SCORE_DIFFS[this.opts.difficulty].label}`
       : 'Riff Repeater';
-    this.hudSub.textContent = `${modeLabel} · ${chart.key.label} · ${chart.meter.text} · ♩=${Math.round(chart.tempo)}`;
+    this.hudSub.textContent = `${modeLabel} · ${chart.key.label} · ${chart.meter.text} · ${Math.round(chart.tempo)} bpm`;
     this.stMult.box.style.display = mode === 'score' ? '' : 'none';
     this.stStrikes.box.style.display = mode === 'score' ? '' : 'none';
     this.stScore.box.style.display = mode === 'learn' ? 'none' : '';
@@ -531,8 +533,8 @@ export class SongPlayer {
     this._burst(pos.x, pos.y, this._colorOf(n.string), perfect ? 22 : 12);
     let label = perfect ? 'Perfect' : (errReal < 0 ? 'Early' : 'Late');
     if (!perfect && Math.abs(n.cents ?? 0) >= 20 && Math.abs(errReal) < 0.08) label = (n.cents > 0 ? 'Sharp' : 'Flat');
-    this._popup(pos.x, pos.y - 30, label, perfect ? '#7dffb0' : '#ffe27a');
-    if (this.streak > 0 && this.streak % 25 === 0) this._popup(this._w / 2, this._h * 0.3, `${this.streak} note streak!`, '#ffffff', 1.6);
+    this._popup(pos.x, pos.y - 30, label, perfect ? '#9fd8a4' : '#f0d58a');
+    if (this.streak > 0 && this.streak % 25 === 0) this._popup(this._w / 2, this._h * 0.3, `${this.streak} note streak!`, '#f5f0e8', 1.6);
   }
 
   _registerMiss(n) {
@@ -544,12 +546,12 @@ export class SongPlayer {
     const p = this.phrases[n.phrase];
     p.total++;
     const pos = this._notePos(n, 0);
-    this._popup(pos.x, pos.y - 30, 'Miss', '#ff6b6b');
+    this._popup(pos.x, pos.y - 30, 'Miss', '#e48a8a');
 
     if (this.opts.mode === 'score' && this.consecMiss >= 3) {
       this.consecMiss = 0;
       this.strikes++;
-      this._popup(this._w / 2, this._h * 0.35, `STRIKE ${this.strikes}`, '#ff4d4d', 2);
+      this._popup(this._w / 2, this._h * 0.35, `STRIKE ${this.strikes}`, '#e06b6b', 2);
       if (this.strikes >= SCORE_DIFFS[this.opts.difficulty].strikes) {
         this.failed = true;
         this._finish();
@@ -577,19 +579,19 @@ export class SongPlayer {
         const lvl = this._levelByKey[key];
         if (acc >= 0.85 && lvl < MAX_LEVEL) {
           this._levelByKey[key] = lvl + 1;
-          this._popup(this._w / 2, this._h * 0.22, 'LEVEL UP', '#8ad4ff', 1.8);
+          this._popup(this._w / 2, this._h * 0.22, 'LEVEL UP', '#a9c8ee', 1.8);
         } else if (acc >= 0.9 && lvl === MAX_LEVEL) {
           const mastered = this.progress.phraseMastered[key];
           if (!mastered) {
             this.progress.phraseMastered[key] = true;
-            this._popup(this._w / 2, this._h * 0.22, 'PHRASE MASTERED', '#c58bff', 2);
+            this._popup(this._w / 2, this._h * 0.22, 'PHRASE MASTERED', '#c9b6ec', 2);
           } else if (p.faded) {
             this.progress.phraseMasterCleared = this.progress.phraseMasterCleared || {};
             this.progress.phraseMasterCleared[key] = true;
           }
         } else if (acc < 0.4 && lvl > 0) {
           this._levelByKey[key] = lvl - 1;
-          this._popup(this._w / 2, this._h * 0.22, 'Level down', '#ffb36b', 1.4);
+          this._popup(this._w / 2, this._h * 0.22, 'Level down', '#e8b98a', 1.4);
         }
       }
     }
@@ -704,9 +706,9 @@ export class SongPlayer {
       this.speed = next;
       this.speedInput.value = String(Math.round(next * 100));
       this.speedVal.textContent = `${Math.round(next * 100)}%`;
-      this._popup(this._w / 2, this._h * 0.25, `Speed up → ${Math.round(next * 100)}%`, '#8ad4ff', 1.8);
+      this._popup(this._w / 2, this._h * 0.25, `Speed up → ${Math.round(next * 100)}%`, '#a9c8ee', 1.8);
     }
-    this._popup(this._w / 2, this._h * 0.4, `Loop ${this.loopCount}: ${Math.round(acc * 100)}%`, '#ffffff', 1.6);
+    this._popup(this._w / 2, this._h * 0.4, `Loop ${this.loopCount}: ${Math.round(acc * 100)}%`, '#f5f0e8', 1.6);
 
     for (const n of this.notes) {
       if (n.sec < this.rangeStart - 1e-6 || n.sec >= this.rangeEnd - 1e-6) continue;
@@ -833,9 +835,9 @@ export class SongPlayer {
 
     // Background
     const bg = ctx.createLinearGradient(0, 0, 0, H);
-    bg.addColorStop(0, '#05070d');
-    bg.addColorStop(0.6, '#0b1222');
-    bg.addColorStop(1, '#101a30');
+    bg.addColorStop(0, '#111a2e');
+    bg.addColorStop(0.6, '#1a2744');
+    bg.addColorStop(1, '#1e3a6e');
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
 
@@ -874,8 +876,8 @@ export class SongPlayer {
     const farL = this._project(this._colX(firstCol - 0.5, g), g.floorY, lookSong, g);
     const farR = this._project(this._colX(lastCol + 0.5, g), g.floorY, lookSong, g);
     const floorGrad = ctx.createLinearGradient(0, farL.y, 0, nearL.y);
-    floorGrad.addColorStop(0, 'rgba(30,45,80,0)');
-    floorGrad.addColorStop(1, 'rgba(40,60,110,0.55)');
+    floorGrad.addColorStop(0, 'rgba(236,229,216,0)');
+    floorGrad.addColorStop(1, 'rgba(236,229,216,0.07)');
     ctx.fillStyle = floorGrad;
     ctx.beginPath();
     ctx.moveTo(nearL.x, nearL.y);
@@ -893,8 +895,8 @@ export class SongPlayer {
       const a2 = this._project(this._colX(ab + 8.5, g), g.floorY, lookSong * 0.6, g);
       const a3 = this._project(this._colX(ab + 0.5, g), g.floorY, lookSong * 0.6, g);
       const ag = ctx.createLinearGradient(0, a3.y, 0, a0.y);
-      ag.addColorStop(0, 'rgba(140,90,255,0)');
-      ag.addColorStop(1, 'rgba(140,90,255,0.28)');
+      ag.addColorStop(0, 'rgba(196,154,42,0)');
+      ag.addColorStop(1, 'rgba(196,154,42,0.14)');
       ctx.fillStyle = ag;
       ctx.beginPath();
       ctx.moveTo(a0.x, a0.y); ctx.lineTo(a1.x, a1.y); ctx.lineTo(a2.x, a2.y); ctx.lineTo(a3.x, a3.y);
@@ -907,7 +909,7 @@ export class SongPlayer {
       const a = this._project(this._colX(c - 0.5, g), g.floorY, 0, g);
       const b = this._project(this._colX(c - 0.5, g), g.floorY, lookSong, g);
       const tape = c - ab === 2 || c - ab === 4 || c - ab === 5 || c - ab === 7;
-      ctx.strokeStyle = tape ? 'rgba(180,200,255,0.22)' : 'rgba(120,140,190,0.12)';
+      ctx.strokeStyle = tape ? 'rgba(236,229,216,0.25)' : 'rgba(236,229,216,0.1)';
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(a.x, a.y);
@@ -927,7 +929,7 @@ export class SongPlayer {
       const isBar = barStarts.has(Math.round(b * 1000));
       const l = this._project(this._colX(firstCol - 0.5, g), g.floorY, d, g);
       const r = this._project(this._colX(lastCol + 0.5, g), g.floorY, d, g);
-      ctx.strokeStyle = isBar ? 'rgba(200,215,255,0.35)' : 'rgba(160,180,230,0.12)';
+      ctx.strokeStyle = isBar ? 'rgba(236,229,216,0.38)' : 'rgba(236,229,216,0.12)';
       ctx.lineWidth = isBar ? 2 * l.f + 0.5 : 1;
       ctx.beginPath();
       ctx.moveTo(l.x, l.y);
@@ -941,8 +943,8 @@ export class SongPlayer {
       const d = dOf(p.sec);
       if (d < 0 || d > lookSong) continue;
       const pos = this._project(this._colX(lastCol + 0.6, g), g.floorY, d, g);
-      ctx.fillStyle = 'rgba(200,215,255,0.6)';
-      ctx.font = `600 ${Math.max(9, 14 * pos.f)}px system-ui, sans-serif`;
+      ctx.fillStyle = 'rgba(236,229,216,0.65)';
+      ctx.font = `600 ${Math.max(9, 14 * pos.f)}px ${FONT}`;
       ctx.fillText(p.name, Math.min(W - 60, pos.x + 4), pos.y - 4);
     }
 
@@ -962,22 +964,22 @@ export class SongPlayer {
       ctx.globalAlpha = 1;
       // label
       ctx.fillStyle = this._colorOf(s);
-      ctx.font = '700 13px system-ui, sans-serif';
+      ctx.font = `700 13px ${FONT}`;
       ctx.textAlign = 'left';
       ctx.fillText(this.preset.strings[s].name, 6, y + 4);
     }
 
     // Column numbers under the strings
     ctx.textAlign = 'center';
-    ctx.font = '600 11px system-ui, sans-serif';
+    ctx.font = `600 11px ${FONT}`;
     for (let c = Math.max(0, firstCol); c <= lastCol; c++) {
       const x = this._colX(c, g);
       const rel = c - ab;
-      ctx.fillStyle = rel >= 1 && rel <= 8 ? 'rgba(200,180,255,0.85)' : 'rgba(150,165,200,0.45)';
+      ctx.fillStyle = rel >= 1 && rel <= 8 ? 'rgba(232,206,140,0.9)' : 'rgba(236,229,216,0.4)';
       ctx.fillText(String(c), x, g.floorY + 14);
     }
-    ctx.fillStyle = 'rgba(200,180,255,0.85)';
-    ctx.font = '600 11px system-ui, sans-serif';
+    ctx.fillStyle = 'rgba(232,206,140,0.9)';
+    ctx.font = `600 11px ${FONT}`;
     ctx.textAlign = 'left';
     ctx.fillText(`${positionName(this._positionOfBase(ab))} position`, 10, 38);
 
@@ -1004,8 +1006,8 @@ export class SongPlayer {
     if (this._state === 'playing' && now < this.rangeStart) {
       const beatsLeft = Math.ceil((this.rangeStart - now) / this._clickSec - 1e-6);
       if (beatsLeft > 0) {
-        ctx.fillStyle = 'rgba(255,255,255,0.9)';
-        ctx.font = `800 ${Math.min(96, H * 0.22)}px system-ui, sans-serif`;
+        ctx.fillStyle = 'rgba(245,240,232,0.92)';
+        ctx.font = `700 ${Math.min(96, H * 0.22)}px ${FONT}`;
         ctx.textAlign = 'center';
         ctx.fillText(String(beatsLeft), W / 2, H * 0.4);
       }
@@ -1014,8 +1016,8 @@ export class SongPlayer {
     // Phrase label + time
     const cur = this.phrases.find(p => now >= p.sec && now < p.endSec);
     ctx.textAlign = 'left';
-    ctx.fillStyle = 'rgba(220,230,255,0.8)';
-    ctx.font = '600 13px system-ui, sans-serif';
+    ctx.fillStyle = 'rgba(236,229,216,0.85)';
+    ctx.font = `600 13px ${FONT}`;
     if (cur) {
       const lvl = cur.level ?? this._levelFor(this.phrases.indexOf(cur));
       const lvTxt = this.opts.mode === 'learn' || (this.opts.mode === 'riff' && this.opts.riff.level === 'dynamic')
@@ -1099,14 +1101,14 @@ export class SongPlayer {
       this._roundRect(ctx, l.x, l.y - h / 2, r.x - l.x, h, h / 2);
       ctx.fill();
       ctx.globalAlpha = alpha;
-      ctx.fillStyle = '#0b1222';
-      ctx.font = `800 ${Math.max(9, 18 * l.f)}px system-ui, sans-serif`;
+      ctx.fillStyle = '#1a2744';
+      ctx.font = `700 ${Math.max(9, 18 * l.f)}px ${FONT}`;
       ctx.textAlign = 'center';
       ctx.fillText('0', (l.x + r.x) / 2, l.y + 6 * l.f);
       if (this.settings.showNoteNames && l.f > 0.35) {
         const nn = midiToNoteName(n.midi);
         ctx.fillStyle = 'rgba(255,255,255,0.85)';
-        ctx.font = `600 ${Math.max(8, 12 * l.f)}px system-ui, sans-serif`;
+        ctx.font = `600 ${Math.max(8, 12 * l.f)}px ${FONT}`;
         ctx.fillText(`${nn.name}${nn.octave}`, (l.x + r.x) / 2 + 40 * l.f, l.y - h);
       }
       ctx.restore();
@@ -1136,26 +1138,26 @@ export class SongPlayer {
 
     // gem
     const grad = ctx.createLinearGradient(0, c.y - h / 2, 0, c.y + h / 2);
-    grad.addColorStop(0, '#ffffff');
+    grad.addColorStop(0, '#f5f0e8');
     grad.addColorStop(0.25, color);
     grad.addColorStop(1, color);
     ctx.fillStyle = grad;
     this._roundRect(ctx, c.x - w / 2, c.y - h / 2, w, h, Math.min(8, h / 3));
     ctx.fill();
-    ctx.strokeStyle = n.state === 'miss' ? '#ff4d4d' : 'rgba(255,255,255,0.9)';
+    ctx.strokeStyle = n.state === 'miss' ? '#e06b6b' : 'rgba(245,240,232,0.9)';
     ctx.lineWidth = Math.max(1, 2 * c.f);
     ctx.stroke();
 
     // finger number
-    ctx.fillStyle = '#0b1222';
-    ctx.font = `800 ${Math.max(9, h * 0.62)}px system-ui, sans-serif`;
+    ctx.fillStyle = '#1a2744';
+    ctx.font = `700 ${Math.max(9, h * 0.62)}px ${FONT}`;
     ctx.textAlign = 'center';
     ctx.fillText(String(n.finger), c.x, c.y + h * 0.22);
 
     if (this.settings.showNoteNames && c.f > 0.3) {
       const nn = midiToNoteName(n.midi);
       ctx.fillStyle = 'rgba(255,255,255,0.9)';
-      ctx.font = `600 ${Math.max(8, 12 * c.f)}px system-ui, sans-serif`;
+      ctx.font = `600 ${Math.max(8, 12 * c.f)}px ${FONT}`;
       ctx.fillText(`${nn.name}${nn.octave}`, c.x, c.y - h / 2 - 4 * c.f);
     }
     ctx.restore();
@@ -1186,12 +1188,12 @@ export class SongPlayer {
     if (off < -1 || off > 20) return;
     const x = this._colX(off, g);
     const y = this._rowY(s, g);
-    let col = '#9fb4ff';
+    let col = '#c9d3e6';
     let label = '';
     if (target && target.string === s) {
       const cents = (midiF - target.midi) * 100;
-      if (Math.abs(cents) <= this.settings.tolerance) col = '#5dff9e';
-      else col = '#ffb347';
+      if (Math.abs(cents) <= this.settings.tolerance) col = '#8fd19a';
+      else col = '#e8b25f';
       if (Math.abs(cents) < 150) label = `${cents > 0 ? '+' : ''}${Math.round(cents)}¢`;
     }
     ctx.save();
@@ -1205,7 +1207,7 @@ export class SongPlayer {
     ctx.restore();
     if (label) {
       ctx.fillStyle = col;
-      ctx.font = '700 11px system-ui, sans-serif';
+      ctx.font = `700 11px ${FONT}`;
       ctx.textAlign = 'center';
       ctx.fillText(label, x, y + 26);
     }
@@ -1246,7 +1248,7 @@ export class SongPlayer {
       p.y -= 0.6; p.life -= 0.018;
       ctx.globalAlpha = Math.max(0, Math.min(1, p.life * 1.5));
       ctx.fillStyle = p.color;
-      ctx.font = `800 ${Math.round(15 * p.scale)}px system-ui, sans-serif`;
+      ctx.font = `800 ${Math.round(15 * p.scale)}px ${FONT}`;
       ctx.fillText(p.text, p.x, p.y);
     }
     this._popups = this._popups.filter(p => p.life > 0).slice(-14);
@@ -1262,7 +1264,7 @@ export class SongPlayer {
     const H = c.height / dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = '#0b1222';
+    ctx.fillStyle = '#e2dace';
     ctx.fillRect(0, 0, W, H);
     const total = this.endSec || 1;
     for (let i = 0; i < this.phrases.length; i++) {
@@ -1274,14 +1276,14 @@ export class SongPlayer {
       const mastered = this.opts.mode === 'learn' && this.progress.phraseMastered[key];
       const inRange = p.sec >= this.rangeStart - 1e-6 && p.endSec <= this.rangeEnd + 1e-6;
       const hFrac = 0.25 + 0.75 * (lvl / MAX_LEVEL);
-      ctx.fillStyle = !inRange ? 'rgba(80,90,120,0.3)'
-        : mastered ? '#a46bff'
-        : p.evaluated && p.acc != null ? (p.acc >= 0.85 ? '#36c46f' : p.acc >= 0.5 ? '#e0b030' : '#d4504f')
-        : '#3a5a9a';
+      ctx.fillStyle = !inRange ? 'rgba(90,106,136,0.25)'
+        : mastered ? '#6b4c9a'
+        : p.evaluated && p.acc != null ? (p.acc >= 0.85 ? '#228b22' : p.acc >= 0.5 ? '#c49a2a' : '#b83a3a')
+        : '#5a6a88';
       ctx.fillRect(x0 + 1, H - H * hFrac, Math.max(1, x1 - x0 - 2), H * hFrac);
     }
     const x = (Math.max(0, this.songSec) / total) * W;
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = '#1a2744';
     ctx.fillRect(x - 1, 0, 2, H);
   }
 
@@ -1451,7 +1453,7 @@ export class SongPlayer {
       bar.title = `${p.name}: ${Math.round(a * 100)}%`;
       const fill = el('div', 'sp-res-phrase-fill');
       fill.style.height = `${Math.max(6, a * 100)}%`;
-      fill.style.background = a >= 0.85 ? '#36c46f' : a >= 0.5 ? '#e0b030' : '#d4504f';
+      fill.style.background = a >= 0.85 ? 'var(--green)' : a >= 0.5 ? 'var(--yellow)' : 'var(--red)';
       bar.appendChild(fill);
       ph.appendChild(bar);
     });
